@@ -15,8 +15,8 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('Close To You Documentation')
-    .setDescription('API para gestionar contactos')
+    .setTitle('Financore Documentation')
+    .setDescription('API para gestionar finanzas personales')
     .setVersion('1.0')
     .addBearerAuth({
       type: 'http',
