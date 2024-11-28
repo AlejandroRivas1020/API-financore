@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadgetsController } from './badgets.controller';
-import { BadgetsService } from './badgets.service';
+import { BadgetsController } from './budgets.controller';
+import { BadgetsService } from './budgets.service';
 
 describe('BadgetsController', () => {
   let controller: BadgetsController;

@@ -1,6 +1,15 @@
 import { BaseEntity } from 'src/common/entities/base.entity';
-import { Budget } from './../../badgets/entities/budget.entity';
-import { BeforeInsert, Column, Entity, PrimaryColumn, OneToMany, ManyToOne, JoinColumn, BeforeUpdate } from 'typeorm';
+import { Budget } from '../../budgets/entities/budget.entity';
+import {
+  BeforeInsert,
+  Column,
+  Entity,
+  PrimaryColumn,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+  BeforeUpdate,
+} from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Inject } from '@nestjs/common';
 import { DatesValidationService } from 'src/common/utils/dates-validation.service';
@@ -12,22 +21,22 @@ export class Earning extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   name: string;
 
-  @Column({ type: 'date', default: () => 'CURRENT_DATE'})
+  @Column({ type: 'date', default: () => 'CURRENT_DATE' })
   startDate: Date;
 
   @Column({ type: 'date', nullable: true })
   endDate?: Date;
-  
+
   @Column({ type: 'money' })
   generalAmount: number;
 
   @OneToMany(() => Budget, (budget) => budget.earning)
-  budgets: Budget[]
-  
+  budgets: Budget[];
+
   @ManyToOne(() => User, (user) => user.earnings)
   @JoinColumn({ name: 'user_id' })
-  user: User
-  
+  user: User;
+
   constructor(
     @Inject(DatesValidationService)
     private readonly datesValidationService: DatesValidationService,
@@ -39,7 +48,10 @@ export class Earning extends BaseEntity {
   @BeforeUpdate()
   validateAndSetEndDate() {
     if (this.startDate) {
-      const result = this.datesValidationService.validateAndSetEndDate(this.startDate, this.endDate);
+      const result = this.datesValidationService.validateAndSetEndDate(
+        this.startDate,
+        this.endDate,
+      );
       this.startDate = result.startDate;
       this.endDate = result.endDate;
     }

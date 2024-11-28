@@ -1,4 +1,4 @@
-import { Budget } from 'src/badgets/entities/budget.entity';
+import { Budget } from 'src/budgets/entities/budget.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Earning } from 'src/earnings/entities/earning.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';

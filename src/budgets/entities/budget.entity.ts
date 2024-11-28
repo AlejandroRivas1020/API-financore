@@ -1,6 +1,13 @@
-import { Earning } from './../../earnings/entities/earning.entity';
-import { Category } from './../../categories/entities/category.entity';
-import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Earning } from '../../earnings/entities/earning.entity';
+import { Category } from '../../categories/entities/category.entity';
+import {
+  BeforeInsert,
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/users/entities/user.entity';
 
@@ -16,12 +23,12 @@ export class Budget extends BaseEntity {
   description?: string;
 
   @Column({ type: 'money' })
-  amount: number; 
+  amount: number;
 
-  @Column({ type: 'date', default: () => 'CURRENT_DATE'})
+  @Column({ type: 'date', default: () => 'CURRENT_DATE' })
   startDate?: Date;
 
-  @Column({ type: 'date',  nullable: true })
+  @Column({ type: 'date', nullable: true })
   endDate?: Date;
 
   @ManyToOne(() => Category, (category) => category.budgets)
@@ -30,7 +37,7 @@ export class Budget extends BaseEntity {
 
   @ManyToOne(() => Earning, (earning) => earning.budgets)
   @JoinColumn({ name: 'earning_id' })
-  earning: Earning;  
+  earning: Earning;
 
   @ManyToOne(() => User, (user) => user.budgets)
   @JoinColumn({ name: 'user_id' })

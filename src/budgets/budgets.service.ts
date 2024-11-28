@@ -3,7 +3,7 @@ import { CreateBadgetDto } from './dto/create-badget.dto';
 import { UpdateBadgetDto } from './dto/update-badget.dto';
 
 @Injectable()
-export class BadgetsService {
+export class BudgetsService {
   create(createBadgetDto: CreateBadgetDto) {
     return 'This action adds a new badget';
   }
