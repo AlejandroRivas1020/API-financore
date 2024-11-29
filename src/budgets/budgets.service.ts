@@ -7,6 +7,8 @@ import { Category } from '../categories/entities/category.entity';
 import { Earning } from '../earnings/entities/earning.entity';
 import { User } from '../users/entities/user.entity';
 import { ResponseBudgetDto } from './dto/create-badget.response.dto';
+import { ResponseByIdDto } from './dto/getById.response.dto';
+import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
 
 @Injectable()
 export class BudgetsService {
@@ -36,7 +38,6 @@ export class BudgetsService {
       userId,
     } = createBadgetDto;
 
-    // Validar entidades relacionadas
     const category = await this.categoryRepository.findOne({
       where: { id: categoryId },
     });
@@ -52,7 +53,6 @@ export class BudgetsService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
 
-    // Crear el presupuesto
     const budget = this.budgetRepository.create({
       name,
       description,
@@ -65,14 +65,11 @@ export class BudgetsService {
     });
 
     try {
-      // Guardar el presupuesto
       const savedBudget = await this.budgetRepository.save(budget);
 
-      // Actualizar el valor de `amountBudgeted` en el earning correspondiente
       earning.amountBudgeted += amount;
       await this.earningRepository.save(earning);
 
-      // Construir la respuesta
       return {
         status: 201,
         data: {
@@ -95,5 +92,30 @@ export class BudgetsService {
     } catch (error) {
       throw new Error(`Error saving budget: ${error.message}`);
     }
+  }
+
+  async getAll(): Promise<ResponseBudgetAllDto> {
+    const budgets = await this.budgetRepository.find();
+    return {
+      status: 200,
+      data: budgets,
+      message: '¡Budgets finded succesfully!',
+    };
+  }
+
+  async getById(id: string): Promise<ResponseByIdDto> {
+    const budget = await this.budgetRepository.findOne({
+      where: { id },
+    });
+
+    if (!budget) {
+      throw new NotFoundException(`Budget with ID ${id} not found`);
+    }
+
+    return {
+      status: 200,
+      data: budget,
+      message: '¡Budget finded succesfully! ',
+    };
   }
 }

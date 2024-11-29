@@ -1,8 +1,16 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Get,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { BudgetsService } from './budgets.service';
 import { CreateBadgetDto } from './dto/create-badget.dto';
 import { ResponseBudgetDto } from './dto/create-badget.response.dto';
+import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
 
 @ApiTags('Budgets')
 @Controller('budgets')
@@ -52,5 +60,20 @@ export class BudgetsController {
     @Body() createBadgetDto: CreateBadgetDto,
   ): Promise<ResponseBudgetDto> {
     return this.budgetsService.create(createBadgetDto);
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get all budgets',
+    description: 'Retrieves all budgets created by the user.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Returns an array of budgets.',
+    type: ResponseBudgetAllDto,
+  })
+  async getAll(): Promise<ResponseBudgetAllDto> {
+    return this.budgetsService.getAll();
   }
 }
