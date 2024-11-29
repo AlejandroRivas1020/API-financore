@@ -1,34 +1,50 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBadRequestResponse,
+  ApiNotFoundResponse, // Agregamos la respuesta para error 404
+} from '@nestjs/swagger';
 import { EarningsService } from './earnings.service';
 import { CreateEarningDto } from './dto/create-earning.dto';
-import { UpdateEarningDto } from './dto/update-earning.dto';
+import { ResponseEarningDto } from './dto/create-earning.response.dto';
 
+@ApiTags('Earnings')
 @Controller('earnings')
 export class EarningsController {
   constructor(private readonly earningsService: EarningsService) {}
 
   @Post()
-  create(@Body() createEarningDto: CreateEarningDto) {
+  @ApiOperation({ summary: 'Create a new earning' })
+  @ApiResponse({
+    status: 201,
+    description: 'Earning created successfully',
+    type: ResponseEarningDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid input data',
+    schema: {
+      example: {
+        statusCode: 400,
+        message: 'Validation failed (e.g., "name" is required)',
+        error: 'Bad Request',
+      },
+    },
+  })
+  @ApiNotFoundResponse({
+    description: 'User with ID not found',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'User with ID user-id-1234 not found',
+        error: 'Not Found',
+      },
+    },
+  })
+  async create(
+    @Body() createEarningDto: CreateEarningDto,
+  ): Promise<ResponseEarningDto> {
     return this.earningsService.create(createEarningDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.earningsService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.earningsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEarningDto: UpdateEarningDto) {
-    return this.earningsService.update(+id, updateEarningDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.earningsService.remove(+id);
   }
 }
