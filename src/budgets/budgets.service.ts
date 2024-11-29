@@ -9,6 +9,7 @@ import { User } from '../users/entities/user.entity';
 import { ResponseBudgetDto } from './dto/create-badget.response.dto';
 import { ResponseByIdDto } from './dto/getById.response.dto';
 import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
+import { parseMoney } from 'src/common/utils/typeMoney-validation.service';
 
 @Injectable()
 export class BudgetsService {
@@ -38,20 +39,44 @@ export class BudgetsService {
       userId,
     } = createBadgetDto;
 
+    // Verificar existencia de relaciones
     const category = await this.categoryRepository.findOne({
       where: { id: categoryId },
     });
-    if (!category)
+    if (!category) {
       throw new NotFoundException(`Category with ID ${categoryId} not found`);
+    }
 
     const earning = await this.earningRepository.findOne({
       where: { id: earningId },
     });
-    if (!earning)
+    if (!earning) {
       throw new NotFoundException(`Earning with ID ${earningId} not found`);
+    }
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Limpiar y convertir a número
+    const generalAmount = parseMoney(earning.generalAmount);
+    const amountBudgeted = parseMoney(earning.amountBudgeted);
+
+    if (isNaN(generalAmount) || isNaN(amountBudgeted)) {
+      throw new Error('Invalid amount format in earning.');
+    }
+
+    // Calcular el saldo disponible
+    const availableAmount = generalAmount - amountBudgeted;
+
+    if (amount > availableAmount) {
+      console.warn(
+        `Warning: Budget amount (${amount}) exceeds available amount (${availableAmount}).`,
+      );
+      // Opcional: Lanza un error si no permites saldos negativos
+      // throw new BadRequestException(`Insufficient funds for this budget.`);
+    }
 
     const budget = this.budgetRepository.create({
       name,
@@ -67,7 +92,9 @@ export class BudgetsService {
     try {
       const savedBudget = await this.budgetRepository.save(budget);
 
-      earning.amountBudgeted += amount;
+      // Actualizar el monto presupuestado del ingreso (se maneja como número)
+      earning.amountBudgeted = amountBudgeted + amount;
+
       await this.earningRepository.save(earning);
 
       return {
@@ -83,7 +110,11 @@ export class BudgetsService {
           earning: {
             id: earning.id,
             name: earning.name,
-            amountBudgeted: earning.amountBudgeted,
+            // Formatear como moneda solo para la respuesta
+            amountBudgeted: earning.amountBudgeted.toLocaleString('en-US', {
+              style: 'currency',
+              currency: 'COP',
+            }),
           },
           user: { id: user.id, name: user.name },
         },

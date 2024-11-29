@@ -16,6 +16,7 @@ export class GlobalErrorInterceptor implements NestInterceptor {
     return next.handle().pipe(
       catchError((error) => {
         // handle errors of type HttpException
+
         if (error instanceof HttpException) {
           return throwError(
             () =>

@@ -28,7 +28,13 @@ export class ResponseBudgetDto {
     startDate?: Date;
     endDate?: Date;
     category?: Partial<Category>;
-    earning: Partial<Earning>;
+    earning:
+      | Partial<Earning>
+      | {
+          id: string;
+          name: string;
+          amountBudgeted: string;
+        };
     user: Partial<User>;
   };
 

@@ -11,7 +11,6 @@ import {
   BeforeUpdate,
 } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
-import { Inject } from '@nestjs/common';
 import { DatesValidationService } from 'src/common/utils/dates-validation.service';
 
 @Entity('Earnings')
@@ -32,7 +31,6 @@ export class Earning extends BaseEntity {
 
   @Column({ type: 'money', default: 0 })
   amountBudgeted: number;
-
 
   @OneToMany(() => Budget, (budget) => budget.earning)
   budgets: Budget[];
