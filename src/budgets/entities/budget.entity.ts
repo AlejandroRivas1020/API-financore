@@ -7,9 +7,12 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  BeforeUpdate,
 } from 'typeorm';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/users/entities/user.entity';
+import { Inject } from '@nestjs/common';
+import { DatesValidationService } from 'src/common/utils/dates-validation.service';
 
 @Entity('Budgets')
 export class Budget extends BaseEntity {
@@ -43,12 +46,23 @@ export class Budget extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
+  constructor(
+    @Inject(DatesValidationService)
+    private readonly datesValidationService: DatesValidationService,
+  ) {
+    super();
+  }
+
   @BeforeInsert()
-  setEndDate() {
+  @BeforeUpdate()
+  validateAndSetEndDate() {
     if (this.startDate) {
-      const endDate = new Date(this.startDate);
-      endDate.setDate(endDate.getDate() + 30);
-      this.endDate = endDate;
+      const result = this.datesValidationService.validateAndSetEndDate(
+        this.startDate,
+        this.endDate,
+      );
+      this.startDate = result.startDate;
+      this.endDate = result.endDate;
     }
   }
 }
