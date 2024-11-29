@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -46,5 +46,11 @@ export class EarningsController {
     @Body() createEarningDto: CreateEarningDto,
   ): Promise<ResponseEarningDto> {
     return this.earningsService.create(createEarningDto);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all earnings' })
+  async getAllEarnings() {
+    return this.earningsService.getAllEarnings();
   }
 }

@@ -70,4 +70,13 @@ export class EarningsService {
       throw new Error(`Error saving earning: ${error.message}`);
     }
   }
+
+  async getAllEarnings() {
+    const earnings = await this.earningRepository.find();
+    return {
+      status: 200,
+      data: earnings,
+      message: '¡Earnings finded succesfully!',
+    };
+  }
 }

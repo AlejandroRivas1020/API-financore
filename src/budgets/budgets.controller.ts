@@ -74,6 +74,6 @@ export class BudgetsController {
     type: ResponseBudgetAllDto,
   })
   async getAll(): Promise<ResponseBudgetAllDto> {
-    return this.budgetsService.getAll();
+    return this.budgetsService.getAllBudgets();
   }
 }

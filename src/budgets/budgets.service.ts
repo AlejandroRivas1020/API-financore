@@ -94,11 +94,36 @@ export class BudgetsService {
     }
   }
 
-  async getAll(): Promise<ResponseBudgetAllDto> {
-    const budgets = await this.budgetRepository.find();
+  async getAllBudgets(): Promise<ResponseBudgetAllDto> {
+    const budgets = await this.budgetRepository.find({
+      relations: ['category', 'earning', 'user'], // Asegúrate de cargar relaciones necesarias
+    });
+
+    const formattedBudgets = budgets.map((budget) => ({
+      id: budget.id,
+      name: budget.name,
+      description: budget.description,
+      amount: budget.amount,
+      startDate:
+        budget.startDate instanceof Date
+          ? budget.startDate.toISOString().split('T')[0]
+          : new Date(budget.startDate).toISOString().split('T')[0],
+      endDate:
+        budget.endDate instanceof Date
+          ? budget.endDate.toISOString().split('T')[0]
+          : new Date(budget.endDate).toISOString().split('T')[0],
+      category: budget.category
+        ? { id: budget.category.id, name: budget.category.name }
+        : null,
+      earning: budget.earning
+        ? { id: budget.earning.id, name: budget.earning.name }
+        : null,
+      user: budget.user ? { id: budget.user.id, name: budget.user.name } : null,
+    }));
+
     return {
       status: 200,
-      data: budgets,
+      data: formattedBudgets,
       message: '¡Budgets finded succesfully!',
     };
   }
