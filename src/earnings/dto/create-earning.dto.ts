@@ -29,7 +29,7 @@ export class CreateEarningDto {
   startDate?: Date;
 
   @ApiProperty({
-    example: '2024-12-31',
+    example: '2024-02-31',
     description: 'End date of the earning',
     required: false,
   })
