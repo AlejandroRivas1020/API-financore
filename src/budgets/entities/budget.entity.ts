@@ -46,18 +46,12 @@ export class Budget extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  constructor(
-    @Inject(DatesValidationService)
-    private readonly datesValidationService: DatesValidationService,
-  ) {
-    super();
-  }
-
   @BeforeInsert()
   @BeforeUpdate()
   validateAndSetEndDate() {
+    const datesValidationService = new DatesValidationService();
     if (this.startDate) {
-      const result = this.datesValidationService.validateAndSetEndDate(
+      const result = datesValidationService.validateAndSetEndDate(
         this.startDate,
         this.endDate,
       );

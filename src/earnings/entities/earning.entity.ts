@@ -40,7 +40,7 @@ export class Earning extends BaseEntity {
   @BeforeInsert()
   @BeforeUpdate()
   validateAndSetEndDate() {
-    const datesValidationService = new DatesValidationService(); // Crear instancia directa
+    const datesValidationService = new DatesValidationService();
     if (this.startDate) {
       const result = datesValidationService.validateAndSetEndDate(
         this.startDate,
