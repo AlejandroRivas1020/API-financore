@@ -14,11 +14,11 @@ export class BudgetsService {
     @InjectRepository(Budget)
     private readonly budgetRepository: Repository<Budget>,
 
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
-
     @InjectRepository(Earning)
     private readonly earningRepository: Repository<Earning>,
+
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -36,7 +36,7 @@ export class BudgetsService {
       userId,
     } = createBadgetDto;
 
-    // Verificar existencia de las entidades relacionadas
+    // Validar entidades relacionadas
     const category = await this.categoryRepository.findOne({
       where: { id: categoryId },
     });
@@ -52,7 +52,7 @@ export class BudgetsService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
 
-    // Crear y guardar el presupuesto
+    // Crear el presupuesto
     const budget = this.budgetRepository.create({
       name,
       description,
@@ -65,9 +65,14 @@ export class BudgetsService {
     });
 
     try {
+      // Guardar el presupuesto
       const savedBudget = await this.budgetRepository.save(budget);
 
-      // Construir la respuesta esperada
+      // Actualizar el valor de `amountBudgeted` en el earning correspondiente
+      earning.amountBudgeted += amount;
+      await this.earningRepository.save(earning);
+
+      // Construir la respuesta
       return {
         status: 201,
         data: {
@@ -78,7 +83,11 @@ export class BudgetsService {
           startDate: savedBudget.startDate,
           endDate: savedBudget.endDate,
           category: { id: category.id, name: category.name },
-          earning: { id: earning.id, name: earning.name },
+          earning: {
+            id: earning.id,
+            name: earning.name,
+            amountBudgeted: earning.amountBudgeted,
+          },
           user: { id: user.id, name: user.name },
         },
         message: 'Budget successfully created',

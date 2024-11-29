@@ -54,4 +54,13 @@ export class CreateEarningDto {
   @IsString()
   @IsUUID()
   userId: string;
+
+  @ApiProperty({
+    example: 0,
+    description: 'The earning budgeted (it is calculate alone)',
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  amountBudgeted?: number;
 }

@@ -11,6 +11,7 @@ export class ResponseEarningDto {
       startDate: '2024-01-01',
       endDate: '2024-12-31',
       generalAmount: 1500000,
+      amountBudgeted: 500000, 
     },
   })
   data: {
@@ -19,6 +20,7 @@ export class ResponseEarningDto {
     startDate?: Date;
     endDate?: Date;
     generalAmount: number;
+    amountBudgeted?: number;
   };
 
   @ApiProperty({ example: 'Earning successfully created' })
