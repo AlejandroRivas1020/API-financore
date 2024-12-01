@@ -5,14 +5,24 @@ import {
   HttpCode,
   HttpStatus,
   Get,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { BudgetsService } from './budgets.service';
 import { CreateBadgetDto } from './dto/create-badget.dto';
 import { ResponseBudgetDto } from './dto/create-badget.response.dto';
 import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @ApiTags('Budgets')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('budgets')
 export class BudgetsController {
   constructor(private readonly budgetsService: BudgetsService) {}

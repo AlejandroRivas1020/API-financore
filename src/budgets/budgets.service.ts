@@ -59,7 +59,6 @@ export class BudgetsService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    // Limpiar y convertir a número
     const generalAmount = parseMoney(earning.generalAmount);
     const amountBudgeted = parseMoney(earning.amountBudgeted);
 
@@ -67,15 +66,12 @@ export class BudgetsService {
       throw new Error('Invalid amount format in earning.');
     }
 
-    // Calcular el saldo disponible
     const availableAmount = generalAmount - amountBudgeted;
 
     if (amount > availableAmount) {
       console.warn(
         `Warning: Budget amount (${amount}) exceeds available amount (${availableAmount}).`,
       );
-      // Opcional: Lanza un error si no permites saldos negativos
-      // throw new BadRequestException(`Insufficient funds for this budget.`);
     }
 
     const budget = this.budgetRepository.create({
@@ -92,7 +88,6 @@ export class BudgetsService {
     try {
       const savedBudget = await this.budgetRepository.save(budget);
 
-      // Actualizar el monto presupuestado del ingreso (se maneja como número)
       earning.amountBudgeted = amountBudgeted + amount;
 
       await this.earningRepository.save(earning);
@@ -127,7 +122,7 @@ export class BudgetsService {
 
   async getAllBudgets(): Promise<ResponseBudgetAllDto> {
     const budgets = await this.budgetRepository.find({
-      relations: ['category', 'earning', 'user'], // Asegúrate de cargar relaciones necesarias
+      relations: ['category', 'earning', 'user'],
     });
 
     const formattedBudgets = budgets.map((budget) => ({
