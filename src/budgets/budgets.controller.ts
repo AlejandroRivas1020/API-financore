@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Get,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -48,7 +49,6 @@ export class BudgetsController {
           endDate: '2024-12-01',
           categoryId: 'cdef1234-abcd-5678-ef90-1234567890ab',
           earningId: 'fghi5678-ijkl-1234-mnop-567890abcdef',
-          userId: 'mnop5678-abcd-1234-qrst-567890uvwxyz',
         },
       },
     },
@@ -68,8 +68,10 @@ export class BudgetsController {
   })
   async create(
     @Body() createBadgetDto: CreateBadgetDto,
+    @Request() request: any,
   ): Promise<ResponseBudgetDto> {
-    return this.budgetsService.create(createBadgetDto);
+    const userId = request.user.userId;
+    return this.budgetsService.create(createBadgetDto, userId);
   }
 
   @Get()

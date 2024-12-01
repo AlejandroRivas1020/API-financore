@@ -1,4 +1,11 @@
-import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -48,8 +55,11 @@ export class EarningsController {
   })
   async create(
     @Body() createEarningDto: CreateEarningDto,
+    @Request() request: any,
   ): Promise<ResponseEarningDto> {
-    return this.earningsService.create(createEarningDto);
+    const userId = request.user.userId;
+    console.log(`el user id en el controller es: ${userId}`);
+    return this.earningsService.create(createEarningDto, userId);
   }
 
   @Get()
