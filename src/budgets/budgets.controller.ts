@@ -7,6 +7,7 @@ import {
   Get,
   UseGuards,
   Request,
+  Put,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,10 +17,12 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { BudgetsService } from './budgets.service';
-import { ResponseBudgetDto } from './dto/create-badget.response.dto';
 import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { CreateBudgetDto } from './dto/create-budget.dto';
+import { ResponseBudgetDto } from './dto/create-budget.response.dto';
+import { ResponseBudgetUpdateDto } from './dto/update-budget.response.dto';
+import { UpdateBudgetDto } from './dto/update-budget.dto';
 
 @ApiTags('Budgets')
 @ApiBearerAuth()
@@ -85,7 +88,55 @@ export class BudgetsController {
     description: 'Returns an array of budgets.',
     type: ResponseBudgetAllDto,
   })
-  async getAll(): Promise<ResponseBudgetAllDto> {
-    return this.budgetsService.getAllBudgets();
+  async getAll(@Request() request: any): Promise<ResponseBudgetAllDto> {
+    const userId = request.user.userId;
+    return this.budgetsService.getAllBudgets(userId);
+  }
+
+  @Put()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Update a budget',
+    description:
+      'Updates an existing budget based on the provided details. Requires ownership of the budget.',
+  })
+  @ApiBody({
+    type: UpdateBudgetDto,
+    description: 'The budget details to update the existing budget',
+    examples: {
+      example1: {
+        summary: 'Complete example',
+        value: {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          name: 'Updated Budget Name',
+          description: 'Updated description for the budget',
+          amount: 750000,
+          startDate: '2024-12-01',
+          endDate: '2024-12-31',
+          categoryId: 'cdef1234-abcd-5678-ef90-1234567890ab',
+          earningId: 'fghi5678-ijkl-1234-mnop-567890abcdef',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The budget has been successfully updated.',
+    type: ResponseBudgetUpdateDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Budget, Category, Earning, or User not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'The user is not the owner of the budget.',
+  })
+  async update(
+    @Body() updateBudgetDto: UpdateBudgetDto,
+    @Request() request: any,
+  ): Promise<ResponseBudgetUpdateDto> {
+    const userId = request.user.userId;
+    return this.budgetsService.updateBudget(updateBudgetDto, userId);
   }
 }

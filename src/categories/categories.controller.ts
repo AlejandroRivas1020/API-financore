@@ -1,4 +1,11 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Request,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -10,6 +17,8 @@ import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { ResponseCategoryDto } from './dto/create-category.response.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Category } from './entities/category.entity';
+import { ResponseCategoriesAllDto } from './dto/getAllCategories.response.dto';
 
 @ApiTags('Categories')
 @ApiBearerAuth()
@@ -39,5 +48,17 @@ export class CategoriesController {
     @Body() createCategoryDto: CreateCategoryDto,
   ): Promise<ResponseCategoryDto> {
     return this.categoriesService.create(createCategoryDto);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all categories' })
+  @ApiResponse({
+    status: 200,
+    description: 'Categories retrieved successfully',
+    type: [Category],
+  })
+  async getAll(@Request() request: any): Promise<ResponseCategoriesAllDto> {
+    const userId = request.user.userId;
+    return this.categoriesService.getAllCategories(userId);
   }
 }

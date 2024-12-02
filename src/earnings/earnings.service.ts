@@ -78,7 +78,7 @@ export class EarningsService {
     return {
       status: 200,
       data: earnings,
-      message: '¡Earnings finded succesfully!',
+      message: '¡Earnings found successfully!',
     };
   }
 }

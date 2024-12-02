@@ -1,5 +1,13 @@
+import { User } from 'src/users/entities/user.entity';
 import { Budget } from '../../budgets/entities/budget.entity';
-import { Column, Entity, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 
 @Entity('Categories')
 export class Category {
@@ -11,4 +19,8 @@ export class Category {
 
   @OneToMany(() => Budget, (budget) => budget.category)
   budgets: Budget[];
+
+  @ManyToOne(() => User, (user) => user.categories)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 }
