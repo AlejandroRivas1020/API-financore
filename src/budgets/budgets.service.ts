@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateBadgetDto } from './dto/create-badget.dto';
 import { Budget } from './entities/budget.entity';
 import { Category } from '../categories/entities/category.entity';
 import { Earning } from '../earnings/entities/earning.entity';
@@ -9,7 +8,7 @@ import { User } from '../users/entities/user.entity';
 import { ResponseBudgetDto } from './dto/create-badget.response.dto';
 import { ResponseByIdDto } from './dto/getById.response.dto';
 import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
-import { parseMoney } from 'src/common/utils/typeMoney-validation.service';
+import { CreateBudgetDto } from './dto/create-budget.dto';
 
 @Injectable()
 export class BudgetsService {
@@ -27,7 +26,10 @@ export class BudgetsService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(createBadgetDto: CreateBadgetDto): Promise<ResponseBudgetDto> {
+  async create(
+    createBudgetDto: CreateBudgetDto,
+    userId: string,
+  ): Promise<ResponseBudgetDto> {
     const {
       name,
       description,
@@ -36,10 +38,8 @@ export class BudgetsService {
       endDate,
       categoryId,
       earningId,
-      userId,
-    } = createBadgetDto;
+    } = createBudgetDto;
 
-    // Verificar existencia de relaciones
     const category = await this.categoryRepository.findOne({
       where: { id: categoryId },
     });
@@ -59,25 +59,6 @@ export class BudgetsService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    // Limpiar y convertir a número
-    const generalAmount = parseMoney(earning.generalAmount);
-    const amountBudgeted = parseMoney(earning.amountBudgeted);
-
-    if (isNaN(generalAmount) || isNaN(amountBudgeted)) {
-      throw new Error('Invalid amount format in earning.');
-    }
-
-    // Calcular el saldo disponible
-    const availableAmount = generalAmount - amountBudgeted;
-
-    if (amount > availableAmount) {
-      console.warn(
-        `Warning: Budget amount (${amount}) exceeds available amount (${availableAmount}).`,
-      );
-      // Opcional: Lanza un error si no permites saldos negativos
-      // throw new BadRequestException(`Insufficient funds for this budget.`);
-    }
-
     const budget = this.budgetRepository.create({
       name,
       description,
@@ -92,9 +73,7 @@ export class BudgetsService {
     try {
       const savedBudget = await this.budgetRepository.save(budget);
 
-      // Actualizar el monto presupuestado del ingreso (se maneja como número)
-      earning.amountBudgeted = amountBudgeted + amount;
-
+      earning.amountBudgeted += amount;
       await this.earningRepository.save(earning);
 
       return {
@@ -110,7 +89,6 @@ export class BudgetsService {
           earning: {
             id: earning.id,
             name: earning.name,
-            // Formatear como moneda solo para la respuesta
             amountBudgeted: earning.amountBudgeted.toLocaleString('en-US', {
               style: 'currency',
               currency: 'COP',
@@ -127,7 +105,7 @@ export class BudgetsService {
 
   async getAllBudgets(): Promise<ResponseBudgetAllDto> {
     const budgets = await this.budgetRepository.find({
-      relations: ['category', 'earning', 'user'], // Asegúrate de cargar relaciones necesarias
+      relations: ['category', 'earning', 'user'],
     });
 
     const formattedBudgets = budgets.map((budget) => ({

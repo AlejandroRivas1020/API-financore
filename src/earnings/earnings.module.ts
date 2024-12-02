@@ -6,9 +6,14 @@ import { Earning } from 'src/earnings/entities/earning.entity';
 import { CommonModule } from 'src/common/common.module';
 import { Budget } from 'src/budgets/entities/budget.entity';
 import { User } from 'src/users/entities/user.entity';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Earning, Budget, User]), CommonModule],
+  imports: [
+    TypeOrmModule.forFeature([Earning, Budget, User]),
+    CommonModule,
+    AuthModule,
+  ],
   controllers: [EarningsController],
   providers: [EarningsService],
 })

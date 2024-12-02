@@ -22,9 +22,11 @@ export class EarningsService {
 
   async create(
     createEarningDto: CreateEarningDto,
+    userId: string,
   ): Promise<ResponseEarningDto> {
-    const { name, startDate, endDate, generalAmount, userId } =
-      createEarningDto;
+    const { name, startDate, endDate, generalAmount } = createEarningDto;
+
+    console.log(userId);
 
     const parsedStartDate =
       startDate instanceof Date ? startDate : new Date(startDate);

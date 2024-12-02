@@ -1,16 +1,27 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBadRequestResponse,
-  ApiNotFoundResponse, // Agregamos la respuesta para error 404
+  ApiNotFoundResponse,
+  ApiBearerAuth, // Agregamos la respuesta para error 404
 } from '@nestjs/swagger';
 import { EarningsService } from './earnings.service';
 import { CreateEarningDto } from './dto/create-earning.dto';
 import { ResponseEarningDto } from './dto/create-earning.response.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @ApiTags('Earnings')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('earnings')
 export class EarningsController {
   constructor(private readonly earningsService: EarningsService) {}
@@ -44,8 +55,11 @@ export class EarningsController {
   })
   async create(
     @Body() createEarningDto: CreateEarningDto,
+    @Request() request: any,
   ): Promise<ResponseEarningDto> {
-    return this.earningsService.create(createEarningDto);
+    const userId = request.user.userId;
+    console.log(`el user id en el controller es: ${userId}`);
+    return this.earningsService.create(createEarningDto, userId);
   }
 
   @Get()
