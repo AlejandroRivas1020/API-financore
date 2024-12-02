@@ -21,6 +21,6 @@ export class ResponseBudgetAllDto {
   })
   data: any[];
 
-  @ApiProperty({ example: '¡Budgets finded succesfully!' })
+  @ApiProperty({ example: '¡Budgets found successfully!' })
   message: string;
 }
