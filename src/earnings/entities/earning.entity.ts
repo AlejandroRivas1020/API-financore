@@ -11,7 +11,6 @@ import {
   BeforeUpdate,
 } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
-import { Inject } from '@nestjs/common';
 import { DatesValidationService } from 'src/common/utils/dates-validation.service';
 
 @Entity('Earnings')
@@ -30,6 +29,9 @@ export class Earning extends BaseEntity {
   @Column({ type: 'money' })
   generalAmount: number;
 
+  @Column({ type: 'money', default: 0 })
+  amountBudgeted: number;
+
   @OneToMany(() => Budget, (budget) => budget.earning)
   budgets: Budget[];
 
@@ -37,18 +39,12 @@ export class Earning extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  constructor(
-    @Inject(DatesValidationService)
-    private readonly datesValidationService: DatesValidationService,
-  ) {
-    super();
-  }
-
   @BeforeInsert()
   @BeforeUpdate()
   validateAndSetEndDate() {
+    const datesValidationService = new DatesValidationService();
     if (this.startDate) {
-      const result = this.datesValidationService.validateAndSetEndDate(
+      const result = datesValidationService.validateAndSetEndDate(
         this.startDate,
         this.endDate,
       );

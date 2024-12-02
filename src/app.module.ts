@@ -3,10 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { dbConfig } from './common/config/db.config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { BudgetsModule } from './budgets/budgets.module';
 import { EarningsModule } from './earnings/earnings.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CommonModule } from './common/common.module';
+import { BudgetsModule } from './budgets/budgets.module';
 
 @Module({
   imports: [
