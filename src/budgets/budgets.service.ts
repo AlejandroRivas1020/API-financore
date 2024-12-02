@@ -1,14 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Budget } from './entities/budget.entity';
 import { Category } from '../categories/entities/category.entity';
 import { Earning } from '../earnings/entities/earning.entity';
 import { User } from '../users/entities/user.entity';
-import { ResponseBudgetDto } from './dto/create-badget.response.dto';
+import { ResponseBudgetDto } from './dto/create-budget.response.dto';
 import { ResponseByIdDto } from './dto/getById.response.dto';
 import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
 import { CreateBudgetDto } from './dto/create-budget.dto';
+import { UpdateBudgetDto } from './dto/update-budget.dto';
+import { ResponseBudgetUpdateDto } from './dto/update-budget.response.dto';
 
 @Injectable()
 export class BudgetsService {
@@ -103,8 +109,15 @@ export class BudgetsService {
     }
   }
 
-  async getAllBudgets(): Promise<ResponseBudgetAllDto> {
+  async getAllBudgets(userId: string): Promise<ResponseBudgetAllDto> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
     const budgets = await this.budgetRepository.find({
+      where: { user: { id: userId } },
       relations: ['category', 'earning', 'user'],
     });
 
@@ -133,7 +146,7 @@ export class BudgetsService {
     return {
       status: 200,
       data: formattedBudgets,
-      message: '¡Budgets finded succesfully!',
+      message: 'Budgets retrieved successfully!',
     };
   }
 
@@ -149,7 +162,98 @@ export class BudgetsService {
     return {
       status: 200,
       data: budget,
-      message: '¡Budget finded succesfully! ',
+      message: '¡Budget found successfully! ',
     };
+  }
+
+  async updateBudget(
+    updateBudgetDto: UpdateBudgetDto,
+    userId: string,
+  ): Promise<ResponseBudgetUpdateDto> {
+    const budget = await this.budgetRepository.findOne({
+      where: { id: updateBudgetDto.id },
+      relations: ['category', 'earning', 'user'],
+    });
+
+    if (!budget) {
+      throw new NotFoundException(
+        `Budget with ID ${updateBudgetDto.id} not found`,
+      );
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    if (user.id !== budget.user.id) {
+      throw new UnauthorizedException('You are not the owner of this budget');
+    }
+
+    const category = updateBudgetDto.categoryId
+      ? await this.categoryRepository.findOne({
+          where: { id: updateBudgetDto.categoryId },
+        })
+      : budget.category;
+
+    if (updateBudgetDto.categoryId && !category) {
+      throw new NotFoundException(
+        `Category with ID ${updateBudgetDto.categoryId} not found`,
+      );
+    }
+
+    const earning = updateBudgetDto.earningId
+      ? await this.earningRepository.findOne({
+          where: { id: updateBudgetDto.earningId },
+        })
+      : budget.earning;
+
+    if (updateBudgetDto.earningId && !earning) {
+      throw new NotFoundException(
+        `Earning with ID ${updateBudgetDto.earningId} not found`,
+      );
+    }
+
+    budget.name = updateBudgetDto.name ?? budget.name;
+    budget.description = updateBudgetDto.description ?? budget.description;
+    budget.amount = updateBudgetDto.amount ?? budget.amount;
+    budget.startDate = updateBudgetDto.startDate ?? budget.startDate;
+    budget.endDate = updateBudgetDto.endDate ?? budget.endDate;
+    budget.category = category;
+    budget.earning = earning;
+
+    try {
+      const updatedBudget = await this.budgetRepository.save(budget);
+
+      const response: ResponseBudgetUpdateDto = {
+        status: 200,
+        data: {
+          id: updatedBudget.id,
+          name: updatedBudget.name,
+          description: updatedBudget.description,
+          amount: updatedBudget.amount,
+          startDate: updatedBudget.startDate,
+          endDate: updatedBudget.endDate,
+          category: {
+            id: category.id,
+            name: category.name,
+          },
+          earning: {
+            id: earning.id,
+            name: earning.name,
+          },
+          user: {
+            id: user.id,
+            name: user.name,
+          },
+        },
+        message: 'Budget successfully updated',
+      };
+
+      return response;
+    } catch (error) {
+      throw new Error(`Error updating budget: ${error.message}`);
+    }
   }
 }
