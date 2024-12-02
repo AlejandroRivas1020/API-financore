@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateBadgetDto {
+export class CreateBudgetDto {
   @ApiProperty({
     description: 'Name of the budget',
     example: 'Monthly Budget',

@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateBadgetDto } from './dto/create-badget.dto';
 import { Budget } from './entities/budget.entity';
 import { Category } from '../categories/entities/category.entity';
 import { Earning } from '../earnings/entities/earning.entity';
@@ -9,6 +8,7 @@ import { User } from '../users/entities/user.entity';
 import { ResponseBudgetDto } from './dto/create-badget.response.dto';
 import { ResponseByIdDto } from './dto/getById.response.dto';
 import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
+import { CreateBudgetDto } from './dto/create-budget.dto';
 
 @Injectable()
 export class BudgetsService {
@@ -27,7 +27,7 @@ export class BudgetsService {
   ) {}
 
   async create(
-    createBadgetDto: CreateBadgetDto,
+    createBudgetDto: CreateBudgetDto,
     userId: string,
   ): Promise<ResponseBudgetDto> {
     const {
@@ -38,7 +38,7 @@ export class BudgetsService {
       endDate,
       categoryId,
       earningId,
-    } = createBadgetDto;
+    } = createBudgetDto;
 
     const category = await this.categoryRepository.findOne({
       where: { id: categoryId },

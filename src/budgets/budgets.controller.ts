@@ -16,10 +16,10 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { BudgetsService } from './budgets.service';
-import { CreateBadgetDto } from './dto/create-badget.dto';
 import { ResponseBudgetDto } from './dto/create-badget.response.dto';
 import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { CreateBudgetDto } from './dto/create-budget.dto';
 
 @ApiTags('Budgets')
 @ApiBearerAuth()
@@ -36,7 +36,7 @@ export class BudgetsController {
       'Creates a new budget entry with the provided details, linking it to a category, earning, and user.',
   })
   @ApiBody({
-    type: CreateBadgetDto,
+    type: CreateBudgetDto,
     description: 'The budget details to create a new budget',
     examples: {
       example1: {
@@ -67,11 +67,11 @@ export class BudgetsController {
     description: 'Related entity (Category, Earning, or User) not found.',
   })
   async create(
-    @Body() createBadgetDto: CreateBadgetDto,
+    @Body() createBudgetDtoCreateBudgetDto: CreateBudgetDto,
     @Request() request: any,
   ): Promise<ResponseBudgetDto> {
     const userId = request.user.userId;
-    return this.budgetsService.create(createBadgetDto, userId);
+    return this.budgetsService.create(createBudgetDtoCreateBudgetDto, userId);
   }
 
   @Get()
