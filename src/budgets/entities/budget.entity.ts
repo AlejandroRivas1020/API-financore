@@ -44,6 +44,8 @@ export class Budget extends BaseEntity {
   @ManyToOne(() => User, (user) => user.budgets)
   @JoinColumn({ name: 'user_id' })
   user: User;
+  amountSpent: number;
+  amountSpent: number;
 
   @BeforeInsert()
   @BeforeUpdate()
