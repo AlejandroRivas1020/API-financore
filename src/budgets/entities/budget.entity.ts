@@ -45,7 +45,6 @@ export class Budget extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: User;
   amountSpent: number;
-  amountSpent: number;
 
   @BeforeInsert()
   @BeforeUpdate()

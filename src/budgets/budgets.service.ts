@@ -7,6 +7,8 @@ import { Category } from '../categories/entities/category.entity';
 import { Earning } from '../earnings/entities/earning.entity';
 import { User } from '../users/entities/user.entity';
 import { ResponseBudgetDto } from './dto/create-badget.response.dto';
+import { ResponseByIdDto } from './dto/getById.response.dto';
+import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
 import { parseMoney } from 'src/common/utils/typeMoney-validation.service';
 import { NotificationService } from '../common/utils/notification.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -70,10 +72,6 @@ export class BudgetsService {
     const availableAmount = generalAmount - amountBudgeted;
 
     if (amount > availableAmount) {
-      console.warn(
-        `Warning: Budget amount (${amount}) exceeds available amount (${availableAmount}).`,
-      );
-
       const notificationTitle = 'Budget Exceeded!';
       const notificationMessage = `You have exceeded your available funds. Budget: ${amount}, Available: ${availableAmount}`;
       await this.notificationService.sendNotification(
@@ -98,7 +96,6 @@ export class BudgetsService {
       const savedBudget = await this.budgetRepository.save(budget);
 
       earning.amountBudgeted = amountBudgeted + amount;
-
       await this.earningRepository.save(earning);
 
       return {
@@ -128,13 +125,67 @@ export class BudgetsService {
     }
   }
 
+  async getAllBudgets(): Promise<ResponseBudgetAllDto> {
+    const budgets = await this.budgetRepository.find({
+      relations: ['category', 'earning', 'user'],
+    });
+
+    const formattedBudgets = budgets.map((budget) => ({
+      id: budget.id,
+      name: budget.name,
+      description: budget.description,
+      amount: budget.amount,
+      startDate:
+        budget.startDate instanceof Date
+          ? budget.startDate.toISOString().split('T')[0]
+          : new Date(budget.startDate).toISOString().split('T')[0],
+      endDate:
+        budget.endDate instanceof Date
+          ? budget.endDate.toISOString().split('T')[0]
+          : new Date(budget.endDate).toISOString().split('T')[0],
+      category: budget.category
+        ? { id: budget.category.id, name: budget.category.name }
+        : null,
+      earning: budget.earning
+        ? { id: budget.earning.id, name: budget.earning.name }
+        : null,
+      user: budget.user ? { id: budget.user.id, name: budget.user.name } : null,
+    }));
+
+    return {
+      status: 200,
+      data: formattedBudgets,
+      message: '¡Budgets retrieved successfully!',
+    };
+  }
+
+  async getById(id: string): Promise<ResponseByIdDto> {
+    const budget = await this.budgetRepository.findOne({
+      where: { id },
+    });
+
+    if (!budget) {
+      throw new NotFoundException(`Budget with ID ${id} not found`);
+    }
+
+    return {
+      status: 200,
+      data: budget,
+      message: '¡Budget retrieved successfully!',
+    };
+  }
+
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async notifyLowBudget(): Promise<void> {
     const budgets = await this.budgetRepository.find({ relations: ['user'] });
 
     budgets.forEach(async (budget) => {
-      const spentPercentage = (budget.amountSpent / budget.amount) * 100;
+      if (budget.amountSpent === undefined || budget.amount === undefined) {
+        console.warn(`Budget data incomplete for ${budget.id}`);
+        return;
+      }
 
+      const spentPercentage = (budget.amountSpent / budget.amount) * 100;
       if (spentPercentage >= 90) {
         await this.notificationService.sendNotification(
           budget.user.id,
@@ -153,6 +204,11 @@ export class BudgetsService {
     const budgets = await this.budgetRepository.find({ relations: ['user'] });
 
     budgets.forEach(async (budget) => {
+      if (!budget.endDate) {
+        console.warn(`Budget end date missing for ${budget.id}`);
+        return;
+      }
+
       const endDate = new Date(budget.endDate);
       const daysLeft = Math.ceil(
         (endDate.getTime() - today.getTime()) / (1000 * 3600 * 24),
@@ -173,6 +229,11 @@ export class BudgetsService {
     const budgets = await this.budgetRepository.find({ relations: ['user'] });
 
     budgets.forEach(async (budget) => {
+      if (!budget.startDate) {
+        console.warn(`Budget start date missing for ${budget.id}`);
+        return;
+      }
+
       const startDate = new Date(budget.startDate);
       const today = new Date();
 
@@ -194,6 +255,11 @@ export class BudgetsService {
     const budgets = await this.budgetRepository.find({ relations: ['user'] });
 
     budgets.forEach(async (budget) => {
+      if (budget.amountSpent === undefined || budget.amount === undefined) {
+        console.warn(`Budget data incomplete for ${budget.id}`);
+        return;
+      }
+
       if (budget.amountSpent > budget.amount) {
         await this.notificationService.sendNotification(
           budget.user.id,
