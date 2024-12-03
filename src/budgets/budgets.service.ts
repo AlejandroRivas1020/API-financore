@@ -262,10 +262,19 @@ export class BudgetsService {
     id: string,
     userId: string,
   ): Promise<ResponseBudgetDeleteDto> {
-    const budget = await this.budgetRepository.findOne({ where: { id } });
+    const budget = await this.budgetRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
 
     if (!budget) {
       throw new NotFoundException(`Budget with ID ${id} not found`);
+    }
+
+    if (budget.user.id !== userId) {
+      throw new UnauthorizedException(
+        'You do not have permission to delete this budget',
+      );
     }
 
     try {
