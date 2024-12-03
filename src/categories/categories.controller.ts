@@ -46,8 +46,10 @@ export class CategoriesController {
   })
   async create(
     @Body() createCategoryDto: CreateCategoryDto,
+    @Request() request: any,
   ): Promise<ResponseCategoryDto> {
-    return this.categoriesService.create(createCategoryDto);
+    const userId = request.user.userId;
+    return this.categoriesService.create(createCategoryDto, userId);
   }
 
   @Get()

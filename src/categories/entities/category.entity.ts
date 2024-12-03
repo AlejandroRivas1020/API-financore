@@ -1,19 +1,10 @@
 import { User } from 'src/users/entities/user.entity';
 import { Budget } from '../../budgets/entities/budget.entity';
-import {
-  Column,
-  Entity,
-  PrimaryGeneratedColumn,
-  OneToMany,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Column, Entity, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity('Categories')
-export class Category {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
+export class Category extends BaseEntity {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 

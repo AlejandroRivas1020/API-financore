@@ -7,6 +7,7 @@ import { EarningsModule } from './earnings/earnings.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CommonModule } from './common/common.module';
 import { BudgetsModule } from './budgets/budgets.module';
+import { GraphicsModule } from './graphics/graphics.module';
 import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
@@ -17,6 +18,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     BudgetsModule,
     EarningsModule,
     CategoriesModule,
+    GraphicsModule,
     TransactionsModule,
   ],
   controllers: [],
