@@ -2,13 +2,10 @@ import { Budget } from 'src/budgets/entities/budget.entity';
 import { Category } from 'src/categories/entities/category.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { Earning } from 'src/earnings/entities/earning.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 
 @Entity('users')
 export class User extends BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
   @Column({ type: 'varchar', length: 255 })
   name: string;
 

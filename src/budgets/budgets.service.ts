@@ -15,6 +15,7 @@ import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { ResponseBudgetUpdateDto } from './dto/update-budget.response.dto';
+import { ResponseBudgetDeleteDto } from './dto/delete-budget.dto';
 
 @Injectable()
 export class BudgetsService {
@@ -95,7 +96,7 @@ export class BudgetsService {
           earning: {
             id: earning.id,
             name: earning.name,
-            amountBudgeted: earning.amountBudgeted.toLocaleString('en-US', {
+            amountBudgeted: earning.amountBudgeted.toLocaleString('es-CO', {
               style: 'currency',
               currency: 'COP',
             }),
@@ -254,6 +255,28 @@ export class BudgetsService {
       return response;
     } catch (error) {
       throw new Error(`Error updating budget: ${error.message}`);
+    }
+  }
+
+  async deleteBudget(
+    id: string,
+    userId: string,
+  ): Promise<ResponseBudgetDeleteDto> {
+    const budget = await this.budgetRepository.findOne({ where: { id } });
+
+    if (!budget) {
+      throw new NotFoundException(`Budget with ID ${id} not found`);
+    }
+
+    try {
+      await this.budgetRepository.delete(id);
+
+      return {
+        status: 200,
+        message: 'Budget successfully deleted',
+      };
+    } catch (error) {
+      throw new Error(`Error deleting budget: ${error.message}`);
     }
   }
 }
