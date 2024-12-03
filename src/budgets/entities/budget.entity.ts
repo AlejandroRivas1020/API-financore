@@ -4,7 +4,6 @@ import {
   BeforeInsert,
   Column,
   Entity,
-  PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
   BeforeUpdate,
@@ -15,9 +14,6 @@ import { DatesValidationService } from 'src/common/utils/dates-validation.servic
 
 @Entity('Budgets')
 export class Budget extends BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
   @Column({ type: 'varchar', length: 255, unique: true })
   name: string;
 

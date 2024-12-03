@@ -8,6 +8,8 @@ import {
   UseGuards,
   Request,
   Put,
+  Param,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,6 +25,7 @@ import { CreateBudgetDto } from './dto/create-budget.dto';
 import { ResponseBudgetDto } from './dto/create-budget.response.dto';
 import { ResponseBudgetUpdateDto } from './dto/update-budget.response.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
+import { ResponseBudgetDeleteDto } from './dto/delete-budget.dto';
 
 @ApiTags('Budgets')
 @ApiBearerAuth()
@@ -138,5 +141,34 @@ export class BudgetsController {
   ): Promise<ResponseBudgetUpdateDto> {
     const userId = request.user.userId;
     return this.budgetsService.updateBudget(updateBudgetDto, userId);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Delete a budget',
+    description:
+      'Removes an existing budget based on the provided ID. Requires ownership of the budget.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: 'The budget has been successfully deleted.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Budget not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.UNAUTHORIZED,
+    description: 'The user is not the owner of the budget.',
+  })
+  async delete(
+    @Param('id')
+    id: string,
+    @Request()
+    request: any,
+  ): Promise<ResponseBudgetDeleteDto> {
+    const userId = request.user.userId;
+    return this.budgetsService.deleteBudget(id, userId);
   }
 }
