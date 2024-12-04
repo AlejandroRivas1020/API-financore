@@ -24,7 +24,7 @@ export class ResponseBudgetDto {
     id: string;
     name: string;
     description?: string;
-    amount: number;
+    amount: string;
     startDate?: Date;
     endDate?: Date;
     category?: Partial<Category>;

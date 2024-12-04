@@ -5,7 +5,7 @@ import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity('Categories')
 export class Category extends BaseEntity {
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, unique: true })
   name: string;
 
   @OneToMany(() => Budget, (budget) => budget.category)

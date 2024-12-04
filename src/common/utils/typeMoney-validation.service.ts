@@ -3,5 +3,9 @@ export function parseMoney(value: string | number): number {
     return value;
   }
   const cleanedValue = value.replace(/[^\d.-]/g, '');
-  return parseFloat(cleanedValue);
+  const parsedValue = parseFloat(cleanedValue);
+  if (isNaN(parsedValue)) {
+    throw new Error(`It is not possible to parse '${value}' to a number.`);
+  }
+  return parsedValue;
 }
