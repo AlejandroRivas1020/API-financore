@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ResponseEarningDto {
-  @ApiProperty({ example: 201 })
+export class ResponseFindOneEarningDto {
+  @ApiProperty({ example: 200 })
   status: number;
 
   @ApiProperty({
@@ -12,6 +12,10 @@ export class ResponseEarningDto {
       endDate: '2024-12-31',
       generalAmount: 1500000,
       amountBudgeted: 500000,
+      user: {
+        id: 'abcdef12-3456-7890-abcd-1234567890ef',
+        name: 'John Doe',
+      },
     },
   })
   data: {
@@ -21,8 +25,12 @@ export class ResponseEarningDto {
     endDate?: Date;
     generalAmount: number;
     amountBudgeted?: number;
+    user: {
+      id: string;
+      name: string;
+    };
   };
 
-  @ApiProperty({ example: 'Earning successfully created' })
+  @ApiProperty({ example: 'Earning found successfully' })
   message: string;
 }
