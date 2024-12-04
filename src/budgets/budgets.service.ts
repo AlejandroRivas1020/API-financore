@@ -1,5 +1,6 @@
 import {
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { ResponseBudgetUpdateDto } from './dto/update-budget.response.dto';
 import { ResponseBudgetDeleteDto } from './dto/delete-budget.dto';
+import { parseMoney } from 'src/common/utils/typeMoney-validation.service';
 
 @Injectable()
 export class BudgetsService {
@@ -47,6 +49,7 @@ export class BudgetsService {
       earningId,
     } = createBudgetDto;
 
+    // Verificar si existen las relaciones
     const category = await this.categoryRepository.findOne({
       where: { id: categoryId },
     });
@@ -66,22 +69,47 @@ export class BudgetsService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const budget = this.budgetRepository.create({
-      name,
-      description,
-      amount,
-      startDate,
-      endDate,
-      category,
-      earning,
-      user,
-    });
+    // validate and pass the amount
+    const parsedAmount =
+      typeof amount === 'number' ? amount : parseMoney(amount);
+    console.log(`Amount parsed to money: ${parsedAmount}`);
 
     try {
-      const savedBudget = await this.budgetRepository.save(budget);
+      if (isNaN(parsedAmount)) {
+        throw new Error(`Invalid amount provided: ${amount}`);
+      }
 
-      earning.amountBudgeted += amount;
+      // Validate and sum `amountBudgeted`
+      earning.amountBudgeted = parseFloat(
+        earning.amountBudgeted?.toString().replace(/[^\d.-]/g, '') || '0',
+      );
+
+      console.log('Initial amountBudgeted:', earning.amountBudgeted);
+
+      if (isNaN(earning.amountBudgeted)) {
+        throw new Error('Invalid amountBudgeted detected in earning.');
+      }
+
+      earning.amountBudgeted += parsedAmount;
+
+      console.log('Updated amountBudgeted:', earning.amountBudgeted);
+
+      // save earning updated
       await this.earningRepository.save(earning);
+
+      // create and save the updated budget
+      const budget = this.budgetRepository.create({
+        name,
+        description,
+        amount: parsedAmount,
+        startDate,
+        endDate,
+        category,
+        earning,
+        user,
+      });
+
+      const savedBudget = await this.budgetRepository.save(budget);
 
       return {
         status: 201,
@@ -89,7 +117,10 @@ export class BudgetsService {
           id: savedBudget.id,
           name: savedBudget.name,
           description: savedBudget.description,
-          amount: savedBudget.amount,
+          amount: parsedAmount.toLocaleString('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+          }),
           startDate: savedBudget.startDate,
           endDate: savedBudget.endDate,
           category: { id: category.id, name: category.name },
@@ -106,7 +137,10 @@ export class BudgetsService {
         message: 'Budget successfully created',
       };
     } catch (error) {
-      throw new Error(`Error saving budget: ${error.message}`);
+      console.error('Error creating budget:', error.message);
+      throw new InternalServerErrorException(
+        `Error saving budget: ${error.message}`,
+      );
     }
   }
 
@@ -264,7 +298,7 @@ export class BudgetsService {
   ): Promise<ResponseBudgetDeleteDto> {
     const budget = await this.budgetRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ['user', 'earning'],
     });
 
     if (!budget) {
