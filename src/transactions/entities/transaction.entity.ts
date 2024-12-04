@@ -8,7 +8,7 @@ export class Transaction extends BaseEntity {
   amount: number;
 
   @JoinColumn({ name: 'budget_id' })
-  @ManyToOne(() => Budget)
+  @ManyToOne(() => Budget, (budget) => budget.transactions)
   budget: Budget;
 
   @Column({ type: 'text', nullable: true })

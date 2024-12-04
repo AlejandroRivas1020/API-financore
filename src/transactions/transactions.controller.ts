@@ -25,8 +25,12 @@ export class TransactionsController {
       'Create a new transaction with the given data and linking it to a budget',
   })
   @Post()
-  create(@Body() createTransactionDto: CreateTransactionDto) {
-    return this.transactionsService.create(createTransactionDto);
+  create(
+    @Body() createTransactionDto: CreateTransactionDto,
+    @Request() req: any,
+  ) {
+    const userId = req.user.id;
+    return this.transactionsService.create(createTransactionDto, userId);
   }
 
   @ApiOperation({

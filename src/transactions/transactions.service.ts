@@ -14,22 +14,24 @@ export class TransactionsService {
     private readonly budgetService: BudgetsService,
   ) {}
 
-  async create(createTransactionDto: CreateTransactionDto) {
+  async create(createTransactionDto: CreateTransactionDto, userId: string) {
     const { amount, description, budgetId } = createTransactionDto;
 
-    const budget = await this.budgetService.getById(budgetId);
+    try {
+      const budget = await this.budgetService.getById(budgetId);
 
-    console.log({ amount, description, budget });
+      const transaction = this.transactionRepository.create({
+        amount,
+        description,
+        budget: budget.data,
+      });
 
-    const transaction = this.transactionRepository.create({
-      amount,
-      description,
-    });
+      await this.budgetService.updateBudget({ amount, id: budgetId }, userId);
 
-    await this.transactionRepository.save(transaction);
-    // await this.budgetService.updateBudget({amount, id: budgetId})
-
-    return 'This action adds a new transaction';
+      return await this.transactionRepository.save(transaction);
+    } catch (error: any) {
+      throw new Error(error);
+    }
   }
 
   async findAll(userId: string) {
