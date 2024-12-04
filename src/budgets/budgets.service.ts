@@ -50,7 +50,6 @@ export class BudgetsService {
       earningId,
     } = createBudgetDto;
 
-    // Verificar si existen las relaciones
     const category = await this.categoryRepository.findOne({
       where: { id: categoryId },
     });
