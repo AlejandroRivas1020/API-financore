@@ -7,9 +7,9 @@ import {
   Get,
   UseGuards,
   Request,
-  Put,
   Param,
   Delete,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -96,7 +96,7 @@ export class BudgetsController {
     return this.budgetsService.getAllBudgets(userId);
   }
 
-  @Put()
+  @Patch()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update a budget',
@@ -107,17 +107,25 @@ export class BudgetsController {
     type: UpdateBudgetDto,
     description: 'The budget details to update the existing budget',
     examples: {
-      example1: {
-        summary: 'Complete example',
+      complete: {
+        summary: 'Complete update example',
         value: {
           id: '123e4567-e89b-12d3-a456-426614174000',
-          name: 'Updated Budget Name',
-          description: 'Updated description for the budget',
-          amount: 750000,
+          name: 'Updated Monthly Budget',
+          description: 'Updated budget for December expenses',
+          amount: 600000,
           startDate: '2024-12-01',
           endDate: '2024-12-31',
           categoryId: 'cdef1234-abcd-5678-ef90-1234567890ab',
           earningId: 'fghi5678-ijkl-1234-mnop-567890abcdef',
+        },
+      },
+      partial: {
+        summary: 'Partial update example',
+        value: {
+          id: '123e4567-e89b-12d3-a456-426614174000',
+          name: 'Partially Updated Budget Name',
+          amount: 750000,
         },
       },
     },
