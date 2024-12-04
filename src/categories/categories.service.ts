@@ -53,7 +53,10 @@ export class CategoriesService {
       throw new Error('User not found');
     }
 
-    const categories = await this.categoryRepository.find({ where: { user } });
+    const categories = await this.categoryRepository.find({
+      where: { user: { id: userId } },
+      relations: ['user'],
+    });
 
     return {
       status: 200,
