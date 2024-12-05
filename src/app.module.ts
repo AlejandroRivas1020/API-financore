@@ -8,6 +8,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { CommonModule } from './common/common.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { GraphicsModule } from './graphics/graphics.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { GraphicsModule } from './graphics/graphics.module';
     EarningsModule,
     CategoriesModule,
     GraphicsModule,
+    TransactionsModule,
   ],
   controllers: [],
   providers: [CommonModule],

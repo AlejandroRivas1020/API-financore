@@ -7,10 +7,12 @@ import {
   ManyToOne,
   JoinColumn,
   BeforeUpdate,
+  OneToMany,
 } from 'typeorm';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { User } from 'src/users/entities/user.entity';
 import { DatesValidationService } from 'src/common/utils/dates-validation.service';
+import { Transaction } from 'src/transactions/entities/transaction.entity';
 
 @Entity('Budgets')
 export class Budget extends BaseEntity {
@@ -40,6 +42,9 @@ export class Budget extends BaseEntity {
   @ManyToOne(() => User, (user) => user.budgets)
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @OneToMany(() => Transaction, (transaction) => transaction.budget)
+  transactions: Transaction[];
 
   @BeforeInsert()
   @BeforeUpdate()

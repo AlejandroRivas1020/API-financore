@@ -26,7 +26,7 @@ export class Earning extends BaseEntity {
   @Column({ type: 'money' })
   generalAmount: number;
 
-  @Column({ type: 'money', default: 0 })
+  @Column({ type: 'money', default: 0, nullable: true })
   amountBudgeted: number;
 
   @OneToMany(() => Budget, (budget) => budget.earning)
