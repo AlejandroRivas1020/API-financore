@@ -16,5 +16,6 @@ import { Category } from 'src/categories/entities/category.entity';
   ],
   controllers: [UsersController],
   providers: [UsersService],
+  exports: [UsersModule],
 })
 export class UsersModule {}

@@ -8,6 +8,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { CommonModule } from './common/common.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { GraphicsModule } from './graphics/graphics.module';
+import { TransactionsModule } from './transactions/transactions.module';
 import { GraphicsScheduler } from './graphics/graphics.scheduler';
 
 @Module({
@@ -19,6 +20,7 @@ import { GraphicsScheduler } from './graphics/graphics.scheduler';
     EarningsModule,
     CategoriesModule,
     GraphicsModule,
+    TransactionsModule,
   ],
   controllers: [],
   providers: [GraphicsScheduler, CommonModule],
