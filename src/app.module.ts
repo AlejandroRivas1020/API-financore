@@ -10,6 +10,7 @@ import { BudgetsModule } from './budgets/budgets.module';
 import { GraphicsModule } from './graphics/graphics.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { GraphicsScheduler } from './graphics/graphics.scheduler';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { GraphicsScheduler } from './graphics/graphics.scheduler';
     CategoriesModule,
     GraphicsModule,
     TransactionsModule,
+    NotificationsModule,
   ],
   controllers: [],
   providers: [GraphicsScheduler, CommonModule],
