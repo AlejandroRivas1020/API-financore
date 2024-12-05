@@ -1,14 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateBadgetDto } from './dto/create-badget.dto';
 import { Budget } from './entities/budget.entity';
 import { Category } from '../categories/entities/category.entity';
 import { Earning } from '../earnings/entities/earning.entity';
 import { User } from '../users/entities/user.entity';
-import { ResponseBudgetDto } from './dto/create-badget.response.dto';
+import { ResponseBudgetDto } from './dto/create-budget.response.dto';
 import { ResponseByIdDto } from './dto/getById.response.dto';
 import { ResponseBudgetAllDto } from './dto/getAll.response.dto';
+import { CreateBudgetDto } from './dto/create-budget.dto';
+import { UpdateBudgetDto } from './dto/update-budget.dto';
+import { ResponseBudgetUpdateDto } from './dto/update-budget.response.dto';
+import { ResponseBudgetDeleteDto } from './dto/delete-budget.dto';
 import { parseMoney } from 'src/common/utils/typeMoney-validation.service';
 import { NotificationService } from '../common/utils/notification.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -31,7 +40,10 @@ export class BudgetsService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  async create(createBadgetDto: CreateBadgetDto): Promise<ResponseBudgetDto> {
+  async create(
+    createBudgetDto: CreateBudgetDto,
+    userId: string,
+  ): Promise<ResponseBudgetDto> {
     const {
       name,
       description,
@@ -40,8 +52,7 @@ export class BudgetsService {
       endDate,
       categoryId,
       earningId,
-      userId,
-    } = createBadgetDto;
+    } = createBudgetDto;
 
     const category = await this.categoryRepository.findOne({
       where: { id: categoryId },
@@ -80,23 +91,47 @@ export class BudgetsService {
         notificationMessage,
       );
     }
-
-    const budget = this.budgetRepository.create({
-      name,
-      description,
-      amount,
-      startDate,
-      endDate,
-      category,
-      earning,
-      user,
-    });
+    // validate and pass the amount
+    const parsedAmount =
+      typeof amount === 'number' ? amount : parseMoney(amount);
+    console.log(`Amount parsed to money: ${parsedAmount}`);
 
     try {
-      const savedBudget = await this.budgetRepository.save(budget);
+      if (isNaN(parsedAmount)) {
+        throw new Error(`Invalid amount provided: ${amount}`);
+      }
 
-      earning.amountBudgeted = amountBudgeted + amount;
+      // Validate and sum `amountBudgeted`
+      earning.amountBudgeted = parseFloat(
+        earning.amountBudgeted?.toString().replace(/[^\d.-]/g, '') || '0',
+      );
+
+      console.log('Initial amountBudgeted:', earning.amountBudgeted);
+
+      if (isNaN(earning.amountBudgeted)) {
+        throw new Error('Invalid amountBudgeted detected in earning.');
+      }
+
+      earning.amountBudgeted += parsedAmount;
+
+      console.log('Updated amountBudgeted:', earning.amountBudgeted);
+
+      // save earning updated
       await this.earningRepository.save(earning);
+
+      // create and save the updated budget
+      const budget = this.budgetRepository.create({
+        name,
+        description,
+        amount: parsedAmount,
+        startDate,
+        endDate,
+        category,
+        earning,
+        user,
+      });
+
+      const savedBudget = await this.budgetRepository.save(budget);
 
       return {
         status: 201,
@@ -104,14 +139,17 @@ export class BudgetsService {
           id: savedBudget.id,
           name: savedBudget.name,
           description: savedBudget.description,
-          amount: savedBudget.amount,
+          amount: parsedAmount.toLocaleString('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+          }),
           startDate: savedBudget.startDate,
           endDate: savedBudget.endDate,
           category: { id: category.id, name: category.name },
           earning: {
             id: earning.id,
             name: earning.name,
-            amountBudgeted: earning.amountBudgeted.toLocaleString('en-US', {
+            amountBudgeted: earning.amountBudgeted.toLocaleString('es-CO', {
               style: 'currency',
               currency: 'COP',
             }),
@@ -121,12 +159,23 @@ export class BudgetsService {
         message: 'Budget successfully created',
       };
     } catch (error) {
-      throw new Error(`Error saving budget: ${error.message}`);
+      console.error('Error creating budget:', error.message);
+      throw new InternalServerErrorException(
+        `Error saving budget: ${error.message}`,
+      );
     }
   }
 
-  async getAllBudgets(): Promise<ResponseBudgetAllDto> {
+  async getAllBudgets(userId: string): Promise<ResponseBudgetAllDto> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
     const budgets = await this.budgetRepository.find({
+      where: { user: { id: userId } },
+
       relations: ['category', 'earning', 'user'],
     });
 
@@ -155,7 +204,7 @@ export class BudgetsService {
     return {
       status: 200,
       data: formattedBudgets,
-      message: '¡Budgets retrieved successfully!',
+      message: 'Budgets retrieved successfully!',
     };
   }
 
@@ -268,5 +317,167 @@ export class BudgetsService {
         );
       }
     });
+      message: '¡Budget found successfully! ',
+    };
+  }
+
+  async updateBudget(
+    updateBudgetDto: UpdateBudgetDto,
+    userId: string,
+  ): Promise<ResponseBudgetUpdateDto> {
+    const {
+      id,
+      name,
+      description,
+      amount,
+      startDate,
+      endDate,
+      categoryId,
+      earningId,
+    } = updateBudgetDto;
+
+    const budget = await this.budgetRepository.findOne({
+      where: { id },
+      relations: ['category', 'earning', 'user'],
+    });
+
+    if (!budget) {
+      throw new NotFoundException(`Budget with ID ${id} not found`);
+    }
+
+    if (budget.user.id !== userId) {
+      throw new UnauthorizedException('You are not the owner of this budget');
+    }
+
+    const category = categoryId
+      ? await this.categoryRepository.findOne({ where: { id: categoryId } })
+      : budget.category;
+    if (categoryId && !category) {
+      throw new NotFoundException(`Category with ID ${categoryId} not found`);
+    }
+
+    const earning = earningId
+      ? await this.earningRepository.findOne({ where: { id: earningId } })
+      : budget.earning;
+    if (earningId && !earning) {
+      throw new NotFoundException(`Earning with ID ${earningId} not found`);
+    }
+
+    if (amount !== undefined) {
+      const parsedAmount =
+        typeof amount === 'number' ? amount : parseMoney(amount);
+
+      console.log(`Amount parsed to money: ${parsedAmount}`);
+
+      if (isNaN(parsedAmount)) {
+        throw new BadRequestException(`Invalid amount provided: ${amount}`);
+      }
+
+      const originalAmount = parseMoney(budget.amount.toString());
+      console.log(`Original amount before any processing: ${originalAmount}`);
+
+      earning.amountBudgeted = parseMoney(earning.amountBudgeted.toString());
+
+      console.log('amountBudgeted after parseMoney:' + earning.amountBudgeted);
+
+      if (isNaN(earning.amountBudgeted)) {
+        throw new BadRequestException(
+          `Invalid amountBudgeted in earning: ${earning.amountBudgeted}`,
+        );
+      }
+
+      const updatedAmountBudgeted =
+        earning.amountBudgeted - originalAmount + parsedAmount;
+
+      console.log('Updated amountBudgeted calculation:');
+      console.log(`earning.amountBudgeted: ${earning.amountBudgeted}`);
+      console.log(`originalAmount: ${originalAmount}`);
+      console.log(`parsedAmount: ${parsedAmount}`);
+      console.log(`Updated amountBudgeted: ${updatedAmountBudgeted}`);
+
+      if (isNaN(updatedAmountBudgeted)) {
+        throw new BadRequestException(
+          'Calculated updated amountBudgeted is NaN',
+        );
+      }
+
+      earning.amountBudgeted = updatedAmountBudgeted;
+
+      await this.earningRepository.save(earning);
+
+      budget.amount = parsedAmount;
+    }
+
+    budget.name = name ?? budget.name;
+    budget.description = description ?? budget.description;
+    budget.startDate = startDate ?? budget.startDate;
+    budget.endDate = endDate ?? budget.endDate;
+    budget.category = category;
+    budget.earning = earning;
+
+    const updatedBudget = await this.budgetRepository.save(budget);
+
+    return {
+      status: 200,
+      data: {
+        id: updatedBudget.id,
+        name: updatedBudget.name,
+        description: updatedBudget.description,
+        amount: updatedBudget.amount.toLocaleString('es-CO', {
+          style: 'currency',
+          currency: 'COP',
+        }),
+        startDate: updatedBudget.startDate,
+        endDate: updatedBudget.endDate,
+        category: {
+          id: category.id,
+          name: category.name,
+        },
+        earning: {
+          id: earning.id,
+          name: earning.name,
+          amountBudgeted: earning.amountBudgeted.toLocaleString('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+          }),
+        },
+        user: {
+          id: budget.user.id,
+          name: budget.user.name,
+        },
+      },
+      message: 'Budget successfully updated',
+    };
+  }
+
+  async deleteBudget(
+    id: string,
+    userId: string,
+  ): Promise<ResponseBudgetDeleteDto> {
+    const budget = await this.budgetRepository.findOne({
+      where: { id },
+      relations: ['user', 'earning'],
+    });
+
+    if (!budget) {
+      throw new NotFoundException(`Budget with ID ${id} not found`);
+    }
+
+    if (budget.user.id !== userId) {
+      throw new UnauthorizedException(
+        'You do not have permission to delete this budget',
+      );
+    }
+
+    try {
+      await this.budgetRepository.delete(id);
+
+      return {
+        status: 200,
+        message: 'Budget successfully deleted',
+      };
+    } catch (error) {
+      throw new Error(`Error deleting budget: ${error.message}`);
+    }
   }
 }

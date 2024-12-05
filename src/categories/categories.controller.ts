@@ -1,10 +1,28 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBadRequestResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Get,
+  Request,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { ResponseCategoryDto } from './dto/create-category.response.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Category } from './entities/category.entity';
+import { ResponseCategoriesAllDto } from './dto/getAllCategories.response.dto';
 
 @ApiTags('Categories')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
@@ -26,7 +44,23 @@ export class CategoriesController {
       },
     },
   })
-  async create(@Body() createCategoryDto: CreateCategoryDto): Promise<ResponseCategoryDto> {
-    return this.categoriesService.create(createCategoryDto);
+  async create(
+    @Body() createCategoryDto: CreateCategoryDto,
+    @Request() request: any,
+  ): Promise<ResponseCategoryDto> {
+    const userId = request.user.userId;
+    return this.categoriesService.create(createCategoryDto, userId);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all categories' })
+  @ApiResponse({
+    status: 200,
+    description: 'Categories retrieved successfully',
+    type: [Category],
+  })
+  async getAll(@Request() request: any): Promise<ResponseCategoriesAllDto> {
+    const userId = request.user.userId;
+    return this.categoriesService.getAllCategories(userId);
   }
 }

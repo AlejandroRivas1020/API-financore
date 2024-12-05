@@ -5,7 +5,6 @@ import {
   IsOptional,
   IsNumber,
   IsDate,
-  IsUUID,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -45,22 +44,4 @@ export class CreateEarningDto {
   @IsNotEmpty()
   @IsNumber()
   generalAmount: number;
-
-  @ApiProperty({
-    example: 'user-id-1234',
-    description: 'The user to whom the earning belongs',
-  })
-  @IsNotEmpty()
-  @IsString()
-  @IsUUID()
-  userId: string;
-
-  @ApiProperty({
-    example: 0,
-    description: 'The earning budgeted (it is calculate alone)',
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  amountBudgeted?: number;
 }

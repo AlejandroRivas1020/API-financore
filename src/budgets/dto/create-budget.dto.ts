@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateBadgetDto {
+export class CreateBudgetDto {
   @ApiProperty({
     description: 'Name of the budget',
     example: 'Monthly Budget',
@@ -67,12 +67,4 @@ export class CreateBadgetDto {
   @IsNotEmpty()
   @IsUUID()
   earningId: string;
-
-  @ApiProperty({
-    description: 'UUID of the associated user',
-    example: 'mnop5678-abcd-1234-qrst-567890uvwxyz',
-  })
-  @IsNotEmpty()
-  @IsUUID()
-  userId: string;
 }
