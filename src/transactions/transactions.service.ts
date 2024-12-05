@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Transaction } from './entities/transaction.entity';
 import { Repository } from 'typeorm';
 import { BudgetsService } from 'src/budgets/budgets.service';
+import { parseMoney } from 'src/common/utils/typeMoney-validation.service';
 
 @Injectable()
 export class TransactionsService {
@@ -18,15 +19,20 @@ export class TransactionsService {
     const { amount, description, budgetId } = createTransactionDto;
 
     try {
-      const budget = await this.budgetService.getById(budgetId);
+      const budget = (await this.budgetService.getById(budgetId)).data;
+
+      const budgetAmount = amount + parseMoney(budget.amount);
 
       const transaction = this.transactionRepository.create({
         amount,
         description,
-        budget: budget.data,
+        budget: { id: budgetId },
       });
 
-      await this.budgetService.updateBudget({ amount, id: budgetId }, userId);
+      await this.budgetService.updateBudget(
+        { amount: budgetAmount, id: budgetId },
+        userId,
+      );
 
       return await this.transactionRepository.save(transaction);
     } catch (error: any) {

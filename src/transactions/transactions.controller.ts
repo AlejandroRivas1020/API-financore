@@ -29,7 +29,8 @@ export class TransactionsController {
     @Body() createTransactionDto: CreateTransactionDto,
     @Request() req: any,
   ) {
-    const userId = req.user.id;
+    const { userId } = req.user;
+
     return this.transactionsService.create(createTransactionDto, userId);
   }
 
@@ -37,8 +38,8 @@ export class TransactionsController {
     summary: 'Get all transactions of user',
   })
   @Get()
-  findAll(@Request() request: any) {
-    const userId = request.user.id;
+  findAll(@Request() req: any) {
+    const { userId } = req.user;
     return this.transactionsService.findAll(userId);
   }
 
