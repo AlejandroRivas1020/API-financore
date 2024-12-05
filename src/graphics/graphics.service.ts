@@ -1,26 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { CreateGraphicDto } from './dto/create-graphic.dto';
-import { UpdateGraphicDto } from './dto/update-graphic.dto';
+import { Server } from 'socket.io';
+import { EarningsService } from 'src/earnings/earnings.service';
 
 @Injectable()
 export class GraphicsService {
-  create(createGraphicDto: CreateGraphicDto) {
-    return 'This action adds a new graphic';
-  }
+  constructor(private readonly earningService: EarningsService) {}
 
-  findAll() {
-    return `This action returns all graphics`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} graphic`;
-  }
-
-  update(id: number, updateGraphicDto: UpdateGraphicDto) {
-    return `This action updates a #${id} graphic`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} graphic`;
+  async broadcastEarnings(server: Server) {
+    const earningsData = await this.earningService.getEarningsData();
+    server.emit('earningsUpdate', earningsData);
   }
 }
