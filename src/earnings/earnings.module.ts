@@ -7,6 +7,7 @@ import { CommonModule } from 'src/common/common.module';
 import { Budget } from 'src/budgets/entities/budget.entity';
 import { User } from 'src/users/entities/user.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { EarningGateway } from 'src/common/gateways/earnings.gateway';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AuthModule } from 'src/auth/auth.module';
     AuthModule,
   ],
   controllers: [EarningsController],
-  providers: [EarningsService],
+  providers: [EarningsService, EarningGateway],
+  exports: [EarningsService, EarningGateway],
 })
 export class EarningsModule {}

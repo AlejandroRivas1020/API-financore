@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dbConfig } from './common/config/db.config';
 import { UsersModule } from './users/users.module';
@@ -8,6 +8,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { CommonModule } from './common/common.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { GraphicsModule } from './graphics/graphics.module';
+import { GraphicsScheduler } from './graphics/graphics.scheduler';
 
 @Module({
   imports: [
@@ -20,6 +21,12 @@ import { GraphicsModule } from './graphics/graphics.module';
     GraphicsModule,
   ],
   controllers: [],
-  providers: [CommonModule],
+  providers: [GraphicsScheduler, CommonModule],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  constructor(private readonly graphicsScheduler: GraphicsScheduler) {}
+
+  onModuleInit() {
+    this.graphicsScheduler.startBroadcasting(10000);
+  }
+}

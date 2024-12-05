@@ -173,6 +173,12 @@ export class EarningsService {
     };
   }
 
+  async getEarningsData() {
+    return await this.earningRepository.find({
+      select: ['id', 'name', 'generalAmount', 'amountBudgeted'],
+    });
+  }
+
   async deleteEarning(
     id: string,
     userId: string,
