@@ -18,6 +18,6 @@ import { AuthModule } from 'src/auth/auth.module';
   ],
   controllers: [BudgetsController],
   providers: [BudgetsService, NotificationService],
-  exports: [BudgetsModule],
+  exports: [BudgetsModule, NotificationService],
 })
 export class BudgetsModule {}

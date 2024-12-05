@@ -217,9 +217,28 @@ export class BudgetsService {
       throw new NotFoundException(`Budget with ID ${id} not found`);
     }
 
+    const formattedBudget = {
+      id: budget.id,
+      name: budget.name,
+      description: budget.description,
+      amount: budget.amount.toLocaleString('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+      }),
+      startDate: budget.startDate,
+      endDate: budget.endDate,
+      category: budget.category
+        ? { id: budget.category.id, name: budget.category.name }
+        : null,
+      earning: budget.earning
+        ? { id: budget.earning.id, name: budget.earning.name }
+        : null,
+      user: budget.user ? { id: budget.user.id, name: budget.user.name } : null,
+    };
+
     return {
       status: 200,
-      data: budget,
+      data: formattedBudget,
       message: '¡Budget retrieved successfully!',
     };
   }
@@ -317,8 +336,8 @@ export class BudgetsService {
         );
       }
     });
-      message: '¡Budget found successfully! ',
-    };
+
+    console.log('¡Budget found successfully!');
   }
 
   async updateBudget(
