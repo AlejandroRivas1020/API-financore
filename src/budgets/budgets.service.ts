@@ -19,6 +19,8 @@ import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { ResponseBudgetUpdateDto } from './dto/update-budget.response.dto';
 import { ResponseBudgetDeleteDto } from './dto/delete-budget.dto';
 import { parseMoney } from 'src/common/utils/typeMoney-validation.service';
+import { NotificationService } from '../common/utils/notification.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class BudgetsService {
@@ -34,6 +36,8 @@ export class BudgetsService {
 
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    private readonly notificationService: NotificationService,
   ) {}
 
   async create(
@@ -50,7 +54,6 @@ export class BudgetsService {
       earningId,
     } = createBudgetDto;
 
-    // Verificar si existen las relaciones
     const category = await this.categoryRepository.findOne({
       where: { id: categoryId },
     });
@@ -70,6 +73,24 @@ export class BudgetsService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
+    const generalAmount = parseMoney(earning.generalAmount);
+    const amountBudgeted = parseMoney(earning.amountBudgeted);
+
+    if (isNaN(generalAmount) || isNaN(amountBudgeted)) {
+      throw new Error('Invalid amount format in earning.');
+    }
+
+    const availableAmount = generalAmount - amountBudgeted;
+
+    if (amount > availableAmount) {
+      const notificationTitle = 'Budget Exceeded!';
+      const notificationMessage = `You have exceeded your available funds. Budget: ${amount}, Available: ${availableAmount}`;
+      await this.notificationService.sendNotification(
+        user.id,
+        notificationTitle,
+        notificationMessage,
+      );
+    }
     // validate and pass the amount
     const parsedAmount =
       typeof amount === 'number' ? amount : parseMoney(amount);
@@ -154,6 +175,7 @@ export class BudgetsService {
 
     const budgets = await this.budgetRepository.find({
       where: { user: { id: userId } },
+
       relations: ['category', 'earning', 'user'],
     });
 
@@ -198,6 +220,103 @@ export class BudgetsService {
     return {
       status: 200,
       data: budget,
+      message: '¡Budget retrieved successfully!',
+    };
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async notifyLowBudget(): Promise<void> {
+    const budgets = await this.budgetRepository.find({ relations: ['user'] });
+
+    budgets.forEach(async (budget) => {
+      if (budget.amountSpent === undefined || budget.amount === undefined) {
+        console.warn(`Budget data incomplete for ${budget.id}`);
+        return;
+      }
+
+      const spentPercentage = (budget.amountSpent / budget.amount) * 100;
+      if (spentPercentage >= 90) {
+        await this.notificationService.sendNotification(
+          budget.user.id,
+          'Low Budget Alert',
+          `Your budget for "${budget.name}" is ${spentPercentage.toFixed(
+            2,
+          )}% spent.`,
+        );
+      }
+    });
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async notifyBudgetDeadline(): Promise<void> {
+    const today = new Date();
+    const budgets = await this.budgetRepository.find({ relations: ['user'] });
+
+    budgets.forEach(async (budget) => {
+      if (!budget.endDate) {
+        console.warn(`Budget end date missing for ${budget.id}`);
+        return;
+      }
+
+      const endDate = new Date(budget.endDate);
+      const daysLeft = Math.ceil(
+        (endDate.getTime() - today.getTime()) / (1000 * 3600 * 24),
+      );
+
+      if (daysLeft === 1) {
+        await this.notificationService.sendNotification(
+          budget.user.id,
+          'Budget Deadline Alert',
+          `Your budget for "${budget.name}" ends tomorrow.`,
+        );
+      }
+    });
+  }
+
+  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
+  async notifyNewMonthlyBudgets(): Promise<void> {
+    const budgets = await this.budgetRepository.find({ relations: ['user'] });
+
+    budgets.forEach(async (budget) => {
+      if (!budget.startDate) {
+        console.warn(`Budget start date missing for ${budget.id}`);
+        return;
+      }
+
+      const startDate = new Date(budget.startDate);
+      const today = new Date();
+
+      if (
+        startDate.getMonth() === today.getMonth() &&
+        startDate.getFullYear() === today.getFullYear()
+      ) {
+        await this.notificationService.sendNotification(
+          budget.user.id,
+          'New Monthly Budget',
+          `Your budget "${budget.name}" has been added for this month.`,
+        );
+      }
+    });
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async notifyBudgetOverrun(): Promise<void> {
+    const budgets = await this.budgetRepository.find({ relations: ['user'] });
+
+    budgets.forEach(async (budget) => {
+      if (budget.amountSpent === undefined || budget.amount === undefined) {
+        console.warn(`Budget data incomplete for ${budget.id}`);
+        return;
+      }
+
+      if (budget.amountSpent > budget.amount) {
+        await this.notificationService.sendNotification(
+          budget.user.id,
+          'Overrun Alert',
+          `You have overspent on your budget "${budget.name}". Please review your expenses.`,
+        );
+      }
+    });
       message: '¡Budget found successfully! ',
     };
   }

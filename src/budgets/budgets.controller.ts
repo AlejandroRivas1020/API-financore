@@ -179,4 +179,36 @@ export class BudgetsController {
     const userId = request.user.userId;
     return this.budgetsService.deleteBudget(id, userId);
   }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get budget by ID',
+    description: 'Retrieve a single budget by its ID.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Returns the requested budget.',
+    type: ResponseBudgetDto,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Budget not found.',
+  })
+  async getById(@Param('id') id: string): Promise<ResponseBudgetDto> {
+    return this.budgetsService.getById(id);
+  }
+
+  @Get('test-notifications')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Test budget notifications',
+    description: 'Triggers manual notifications for testing purposes.',
+  })
+  async testNotifications(): Promise<void> {
+    await this.budgetsService.notifyLowBudget();
+    await this.budgetsService.notifyBudgetDeadline();
+    await this.budgetsService.notifyNewMonthlyBudgets();
+    await this.budgetsService.notifyBudgetOverrun();
+  }
 }
