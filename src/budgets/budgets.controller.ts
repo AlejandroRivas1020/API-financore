@@ -73,11 +73,11 @@ export class BudgetsController {
     description: 'Related entity (Category, Earning, or User) not found.',
   })
   async create(
-    @Body() createBudgetDtoCreateBudgetDto: CreateBudgetDto,
+    @Body() createBudgetDto: CreateBudgetDto,
     @Request() request: any,
   ): Promise<ResponseBudgetDto> {
     const userId = request.user.userId;
-    return this.budgetsService.create(createBudgetDtoCreateBudgetDto, userId);
+    return this.budgetsService.create(createBudgetDto, userId);
   }
 
   @Get()
@@ -171,13 +171,25 @@ export class BudgetsController {
     description: 'The user is not the owner of the budget.',
   })
   async delete(
-    @Param('id')
-    id: string,
-    @Request()
-    request: any,
+    @Param('id') id: string,
+    @Request() request: any,
   ): Promise<ResponseBudgetDeleteDto> {
     const userId = request.user.userId;
     return this.budgetsService.deleteBudget(id, userId);
+  }
+
+  @Get('test-notifications')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Test budget notifications',
+    description:
+      'Creates test data and triggers manual notifications for testing purposes.',
+  })
+  async testNotifications(): Promise<void> {
+    await this.budgetsService.notifyLowBudget();
+    await this.budgetsService.notifyBudgetDeadline();
+    await this.budgetsService.notifyNewMonthlyBudgets();
+    await this.budgetsService.notifyBudgetOverrun();
   }
 
   @Get(':id')
@@ -197,18 +209,5 @@ export class BudgetsController {
   })
   async getById(@Param('id') id: string): Promise<ResponseBudgetDto> {
     return this.budgetsService.getById(id);
-  }
-
-  @Get('test-notifications')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Test budget notifications',
-    description: 'Triggers manual notifications for testing purposes.',
-  })
-  async testNotifications(): Promise<void> {
-    await this.budgetsService.notifyLowBudget();
-    await this.budgetsService.notifyBudgetDeadline();
-    await this.budgetsService.notifyNewMonthlyBudgets();
-    await this.budgetsService.notifyBudgetOverrun();
   }
 }

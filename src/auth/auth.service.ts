@@ -14,6 +14,7 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { CloudinaryService } from 'src/common/cloudinary/cloudinary.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +29,7 @@ export class AuthService {
   async register(
     registerUserDto: RegisterUserDto,
     file?: Express.Multer.File,
+    isTest: boolean = false, //** true para probar en swagger false para movil <-----------------------------------------
   ): Promise<{ message: string }> {
     const { name, email, password, phone } = registerUserDto;
 
@@ -51,6 +53,7 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = this.userRepository.create({
       name,
       email,
@@ -60,7 +63,44 @@ export class AuthService {
     });
     await this.userRepository.save(user);
 
+    const deviceType = isTest ? 6 : 2; // 6 para pruebas en navegador, 2 para Android
+    await this.registerUserInOneSignal(user.id, email, deviceType);
+
     return { message: 'User registered successfully' };
+  }
+
+  async registerUserInOneSignal(
+    userId: string,
+    email: string,
+    deviceType: number, // Tipo de dispositivo: 2 (Android) o 6 (Web para pruebas)
+  ): Promise<void> {
+    const data = {
+      app_id: process.env.ONESIGNAL_APP_ID,
+      external_user_id: userId,
+      identifier: email,
+      device_type: deviceType,
+    };
+
+    try {
+      const response = await axios.post(
+        'https://onesignal.com/api/v1/players',
+        data,
+        {
+          headers: {
+            Authorization: `Basic ${process.env.ONESIGNAL_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      console.log('User registered in OneSignal:', response.data);
+    } catch (error) {
+      console.error(
+        'Error registering user in OneSignal:',
+        error.response?.data || error.message,
+      );
+      throw new Error('Failed to register user in OneSignal');
+    }
   }
 
   async login(loginUserDto: LoginUserDto): Promise<{ accessToken: string }> {
