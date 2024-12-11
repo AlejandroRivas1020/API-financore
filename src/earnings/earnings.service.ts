@@ -156,21 +156,15 @@ export class EarningsService {
   }
 
   async getAllEarnings(userId: string): Promise<any> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-
-    const earnings = await this.earningRepository.find({ where: { user } });
-
-    const formattedEarnings = earnings.map((earning) => ({
-      ...earning,
-      amountBudgeted: earning.amountBudgeted.toLocaleString('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-      }),
-    }));
-
+    console.log('Fetching earnings for userId:', userId);
+    const earnings = await this.earningRepository.find({
+      where: { user: { id: userId } },
+      relations: ['user'],
+    });
+    console.log('Earnings found:', earnings);
     return {
       status: 200,
-      data: formattedEarnings,
+      data: earnings,
       message: '¡Earnings found successfully!',
     };
   }
