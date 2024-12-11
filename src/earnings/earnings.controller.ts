@@ -69,8 +69,9 @@ export class EarningsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all earnings' })
-  async getAllEarnings() {
-    return this.earningsService.getAllEarnings();
+  async getAllEarnings(@Request() request: any) {
+    const userId = request.user.userId;
+    return this.earningsService.getAllEarnings(userId);
   }
 
   @Get(':id')

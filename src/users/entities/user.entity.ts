@@ -18,7 +18,7 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 10 })
   phone: string;
 
-  @Column({ type: 'text', name: 'profile_picture' })
+  @Column({ type: 'text', name: 'profile_picture', nullable: true })
   profilePicture: string;
 
   @OneToMany(() => Earning, (earning) => earning.user)

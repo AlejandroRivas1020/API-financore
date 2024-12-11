@@ -155,8 +155,10 @@ export class EarningsService {
     };
   }
 
-  async getAllEarnings() {
-    const earnings = await this.earningRepository.find();
+  async getAllEarnings(userId: string): Promise<any> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    const earnings = await this.earningRepository.find({ where: { user } });
 
     const formattedEarnings = earnings.map((earning) => ({
       ...earning,
