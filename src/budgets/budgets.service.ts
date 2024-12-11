@@ -91,7 +91,7 @@ export class BudgetsService {
         notificationMessage,
       );
     }
-    // validate and pass the amount
+
     const parsedAmount =
       typeof amount === 'number' ? amount : parseMoney(amount);
     console.log(`Amount parsed to money: ${parsedAmount}`);
@@ -101,7 +101,6 @@ export class BudgetsService {
         throw new Error(`Invalid amount provided: ${amount}`);
       }
 
-      // Validate and sum `amountBudgeted`
       earning.amountBudgeted = parseFloat(
         earning.amountBudgeted?.toString().replace(/[^\d.-]/g, '') || '0',
       );
@@ -116,10 +115,8 @@ export class BudgetsService {
 
       console.log('Updated amountBudgeted:', earning.amountBudgeted);
 
-      // save earning updated
       await this.earningRepository.save(earning);
 
-      // create and save the updated budget
       const budget = this.budgetRepository.create({
         name,
         description,
@@ -129,6 +126,7 @@ export class BudgetsService {
         category,
         earning,
         user,
+        amountSpent: 0,
       });
 
       const savedBudget = await this.budgetRepository.save(budget);
@@ -175,7 +173,6 @@ export class BudgetsService {
 
     const budgets = await this.budgetRepository.find({
       where: { user: { id: userId } },
-
       relations: ['category', 'earning', 'user'],
     });
 
@@ -184,6 +181,7 @@ export class BudgetsService {
       name: budget.name,
       description: budget.description,
       amount: budget.amount,
+      amountSpent: budget.amountSpent,
       startDate:
         budget.startDate instanceof Date
           ? budget.startDate.toISOString().split('T')[0]
@@ -211,6 +209,7 @@ export class BudgetsService {
   async getById(id: string): Promise<ResponseByIdDto> {
     const budget = await this.budgetRepository.findOne({
       where: { id },
+      relations: ['category', 'earning', 'user'],
     });
 
     if (!budget) {
@@ -225,6 +224,7 @@ export class BudgetsService {
         style: 'currency',
         currency: 'COP',
       }),
+      amountSpent: budget.amountSpent,
       startDate: budget.startDate,
       endDate: budget.endDate,
       category: budget.category
@@ -239,7 +239,7 @@ export class BudgetsService {
     return {
       status: 200,
       data: formattedBudget,
-      message: '¡Budget retrieved successfully!',
+      message: 'Budget retrieved successfully!',
     };
   }
 
@@ -247,23 +247,20 @@ export class BudgetsService {
   async notifyLowBudget(): Promise<void> {
     const budgets = await this.budgetRepository.find({ relations: ['user'] });
 
-    budgets.forEach(async (budget) => {
-      if (budget.amountSpent === undefined || budget.amount === undefined) {
-        console.warn(`Budget data incomplete for ${budget.id}`);
-        return;
+    for (const budget of budgets) {
+      if (budget.amountSpent && budget.amount) {
+        const spentPercentage = (budget.amountSpent / budget.amount) * 100;
+        if (spentPercentage >= 90) {
+          await this.notificationService.sendNotification(
+            budget.user.id,
+            'Low Budget Alert',
+            `Your budget "${budget.name}" is ${spentPercentage.toFixed(
+              2,
+            )}% spent.`,
+          );
+        }
       }
-
-      const spentPercentage = (budget.amountSpent / budget.amount) * 100;
-      if (spentPercentage >= 90) {
-        await this.notificationService.sendNotification(
-          budget.user.id,
-          'Low Budget Alert',
-          `Your budget for "${budget.name}" is ${spentPercentage.toFixed(
-            2,
-          )}% spent.`,
-        );
-      }
-    });
+    }
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
@@ -271,63 +268,52 @@ export class BudgetsService {
     const today = new Date();
     const budgets = await this.budgetRepository.find({ relations: ['user'] });
 
-    budgets.forEach(async (budget) => {
-      if (!budget.endDate) {
-        console.warn(`Budget end date missing for ${budget.id}`);
-        return;
-      }
-
-      const endDate = new Date(budget.endDate);
-      const daysLeft = Math.ceil(
-        (endDate.getTime() - today.getTime()) / (1000 * 3600 * 24),
-      );
-
-      if (daysLeft === 1) {
-        await this.notificationService.sendNotification(
-          budget.user.id,
-          'Budget Deadline Alert',
-          `Your budget for "${budget.name}" ends tomorrow.`,
+    for (const budget of budgets) {
+      if (budget.endDate) {
+        const endDate = new Date(budget.endDate);
+        const daysLeft = Math.ceil(
+          (endDate.getTime() - today.getTime()) / (1000 * 3600 * 24),
         );
+
+        if (daysLeft === 1) {
+          await this.notificationService.sendNotification(
+            budget.user.id,
+            'Budget Deadline Alert',
+            `Your budget "${budget.name}" ends tomorrow.`,
+          );
+        }
       }
-    });
+    }
   }
 
   @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
   async notifyNewMonthlyBudgets(): Promise<void> {
     const budgets = await this.budgetRepository.find({ relations: ['user'] });
 
-    budgets.forEach(async (budget) => {
-      if (!budget.startDate) {
-        console.warn(`Budget start date missing for ${budget.id}`);
-        return;
-      }
+    for (const budget of budgets) {
+      if (budget.startDate) {
+        const startDate = new Date(budget.startDate);
+        const today = new Date();
 
-      const startDate = new Date(budget.startDate);
-      const today = new Date();
-
-      if (
-        startDate.getMonth() === today.getMonth() &&
-        startDate.getFullYear() === today.getFullYear()
-      ) {
-        await this.notificationService.sendNotification(
-          budget.user.id,
-          'New Monthly Budget',
-          `Your budget "${budget.name}" has been added for this month.`,
-        );
+        if (
+          startDate.getMonth() === today.getMonth() &&
+          startDate.getFullYear() === today.getFullYear()
+        ) {
+          await this.notificationService.sendNotification(
+            budget.user.id,
+            'New Monthly Budget',
+            `Your budget "${budget.name}" has been added for this month.`,
+          );
+        }
       }
-    });
+    }
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async notifyBudgetOverrun(): Promise<void> {
     const budgets = await this.budgetRepository.find({ relations: ['user'] });
 
-    budgets.forEach(async (budget) => {
-      if (budget.amountSpent === undefined || budget.amount === undefined) {
-        console.warn(`Budget data incomplete for ${budget.id}`);
-        return;
-      }
-
+    for (const budget of budgets) {
       if (budget.amountSpent > budget.amount) {
         await this.notificationService.sendNotification(
           budget.user.id,
@@ -335,9 +321,7 @@ export class BudgetsService {
           `You have overspent on your budget "${budget.name}". Please review your expenses.`,
         );
       }
-    });
-
-    console.log('¡Budget found successfully!');
+    }
   }
 
   async updateBudget(

@@ -16,6 +16,9 @@ import {
 } from '@nestjs/swagger';
 import { CreateRegisterWithFileDto } from './dto/register-user-with-file.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ValidateRecoveryTokenDto } from './dto/validate-recovery-token.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -49,5 +52,41 @@ export class AuthController {
     @Body() loginUserDto: LoginUserDto,
   ): Promise<{ accessToken: string }> {
     return await this.authService.login(loginUserDto);
+  }
+
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password recovery' })
+  @ApiResponse({ status: 200, description: 'Email sent successfully.' })
+  @ApiBody({ type: ForgotPasswordDto })
+  async forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<{ message: string }> {
+    const { email } = forgotPasswordDto;
+    await this.authService.sendRecoveryCode(email);
+    return { message: 'A recovery code has been sent to your email.' };
+  }
+
+  @Post('validate-recovery-code')
+  @ApiOperation({ summary: 'Validate recovery code' })
+  @ApiResponse({ status: 200, description: 'Valid code.' })
+  @ApiBody({ type: ValidateRecoveryTokenDto })
+  async validateRecoveryCode(
+    @Body() validateRecoveryTokenDto: ValidateRecoveryTokenDto,
+  ): Promise<{ message: string }> {
+    const { token, email } = validateRecoveryTokenDto;
+    await this.authService.validateRecoveryCode(email, token);
+    return { message: 'Valid recovery code.' };
+  }
+
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully.' })
+  @ApiBody({ type: ResetPasswordDto })
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    const { token, email, newPassword } = resetPasswordDto;
+    await this.authService.resetPassword(email, token, newPassword);
+    return { message: 'Password reset successfully.' };
   }
 }

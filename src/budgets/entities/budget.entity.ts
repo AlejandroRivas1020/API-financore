@@ -19,11 +19,14 @@ export class Budget extends BaseEntity {
   @Column({ type: 'varchar', length: 255, unique: true })
   name: string;
 
-  @Column({ type: 'varchar', length: 500 })
+  @Column({ type: 'varchar', length: 500, nullable: true })
   description?: string;
 
   @Column({ type: 'money' })
   amount: number;
+
+  @Column({ type: 'money', default: 0 })
+  amountSpent: number;
 
   @Column({ type: 'date', default: () => 'CURRENT_DATE' })
   startDate?: Date;
@@ -42,7 +45,6 @@ export class Budget extends BaseEntity {
   @ManyToOne(() => User, (user) => user.budgets)
   @JoinColumn({ name: 'user_id' })
   user: User;
-  amountSpent: number;
 
   @OneToMany(() => Transaction, (transaction) => transaction.budget)
   transactions: Transaction[];

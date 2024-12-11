@@ -29,4 +29,10 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Category, (category) => category.user)
   categories: Category[];
+
+  @Column({ nullable: true })
+  recoveryCode: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  recoveryCodeExpires: Date;
 }
