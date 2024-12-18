@@ -96,7 +96,12 @@ export class BudgetsService {
       typeof amount === 'number' ? amount : parseMoney(amount);
     console.log(`Amount parsed to money: ${parsedAmount}`);
 
+    const queryRunner =
+      this.budgetRepository.manager.connection.createQueryRunner();
+
     try {
+      await queryRunner.startTransaction();
+
       if (isNaN(parsedAmount)) {
         throw new Error(`Invalid amount provided: ${amount}`);
       }
@@ -104,8 +109,6 @@ export class BudgetsService {
       earning.amountBudgeted = parseFloat(
         earning.amountBudgeted?.toString().replace(/[^\d.-]/g, '') || '0',
       );
-
-      console.log('Initial amountBudgeted:', earning.amountBudgeted);
 
       if (isNaN(earning.amountBudgeted)) {
         throw new Error('Invalid amountBudgeted detected in earning.');
@@ -115,7 +118,7 @@ export class BudgetsService {
 
       console.log('Updated amountBudgeted:', earning.amountBudgeted);
 
-      await this.earningRepository.save(earning);
+      await queryRunner.manager.save(earning);
 
       const budget = this.budgetRepository.create({
         name,
@@ -129,7 +132,13 @@ export class BudgetsService {
         amountSpent: 0,
       });
 
-      const savedBudget = await this.budgetRepository.save(budget);
+      const savedBudget = await queryRunner.manager.save(budget);
+
+      if (!savedBudget) {
+        throw new Error('Failed to save budget');
+      }
+
+      await queryRunner.commitTransaction();
 
       return {
         status: 201,
@@ -157,10 +166,13 @@ export class BudgetsService {
         message: 'Budget successfully created',
       };
     } catch (error) {
+      await queryRunner.rollbackTransaction();
       console.error('Error creating budget:', error.message);
       throw new InternalServerErrorException(
         `Error saving budget: ${error.message}`,
       );
+    } finally {
+      await queryRunner.release();
     }
   }
 
